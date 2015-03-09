@@ -18,14 +18,27 @@ namespace SpriteTest
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        KeyboardState   OldKeyboardState,           // We will compare the new and old keyboard states so we know if a key was freshly pressed, held, or released
+        GamePadState   OldKeyboardState,           // We will compare the new and old keyboard states so we know if a key was freshly pressed, held, or released
                         CurrentKeyboardState;
-        List<Entity> Entities;                      // We shouldn't need random access to our game entities, so a list will suffice and be more efficient than an array.
-
+        List<Entity> NonSimulated;                      // We shouldn't need random access to our game entities, so a list will suffice and be more efficient than an array.
+        List<Mobile> Simulated;
+        Vessel Player;
+        Rectangle Boundaries;                       // Game boundaries, top left should typically be 0,0
+        float Scale = 1.0F;
+        Texture2D BoundingBoxTexture;
+        Texture2D TracerTexture;
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
+            graphics.IsFullScreen = false;            
+            graphics.PreferredBackBufferWidth = 1024;
+            graphics.PreferredBackBufferHeight = 768;
+            // For now, use screen edges as our boundary
+            Boundaries = new Rectangle(0, 0, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
             Content.RootDirectory = "Content";
+
+            Simulated = new List<Mobile>();
+            NonSimulated = new List<Entity>();
         }
 
         /// <summary>
@@ -60,7 +73,19 @@ namespace SpriteTest
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             myTexture = Content.Load<Texture2D>("Redbig");
+            TracerTexture = Content.Load<Texture2D>("Tracer");
             // TODO: use this.Content to load your game content here
+
+            Vessel player = new Vessel(myTexture, Entity.EntitySide.PLAYER, new Vector2(600, 600), 0, 100, 100);
+            player.SetVelocity(50, 50);
+            Simulated.Add(player);
+            Player = player;
+            Vessel enemy = new Vessel(myTexture, Entity.EntitySide.ENEMY, new Vector2(200, 200), 0, 100, 100);
+            enemy.DampenInnertia = false;
+            Simulated.Add(enemy);
+            // For hitbox drawing            
+            BoundingBoxTexture = new Texture2D(GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
+            BoundingBoxTexture.SetData(new[] { Color.White }); // so that we can draw whatever color we want on top of it
         }
 
         /// <summary>
@@ -79,53 +104,214 @@ namespace SpriteTest
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            // Allows the game to exit
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
-                this.Exit();
+            // Get the state of the controller
+            CurrentKeyboardState = GamePad.GetState(PlayerIndex.One, GamePadDeadZone.Circular);
 
-            // TODO: Add your update logic here
-            UpdateSprite(gameTime);
+            if (CurrentKeyboardState.Buttons.Back == ButtonState.Pressed)
+                this.Exit();
+            // Get analog stick input
+            Vector2 leftStick = CurrentKeyboardState.ThumbSticks.Left;
+            Vector2 rightStick = CurrentKeyboardState.ThumbSticks.Right;
+            bool fireButton = CurrentKeyboardState.IsButtonDown(Buttons.RightShoulder);
+            if (!(rightStick.X == 0 && rightStick.Y == 0) )
+            {
+                rightStick.Normalize();
+                float rotationWanted = (float)Math.Atan2(rightStick.Y, rightStick.X) - (float)(Math.PI / 2F);
+                if (rotationWanted < 0)
+                    rotationWanted += (float)Math.PI * 2;
+                Player.RotationWanted = rotationWanted;
+            }
+            if (!(leftStick.X == 0 && leftStick.Y == 0))
+            {
+                float mag = leftStick.Length();
+                leftStick.Normalize();
+                leftStick.Y *= -1;
+                Player.SetVelocityWanted(Player.MaxSpeed * mag * leftStick);
+            }
+            else
+            {
+                Player.SetVelocityWanted(0, 0);
+            }
+
+            if (fireButton)
+            {
+                Projectile bullet = new Projectile(TracerTexture, Entity.EntitySide.PLAYER, Player.GetCenterPosition(), Player.Rotation, 0, 1000);
+                float angle = Player.Rotation + (float)Math.PI / 2;
+                bullet.MaxSpeed = 400;
+                Vector2 angleVector = new Vector2((float)Math.Cos(angle), -(float)Math.Sin(angle));
+                bullet.SetVelocity(angleVector * 2*bullet.MaxSpeed + Player.GetVelocity());
+                bullet.SetVelocityWanted(angleVector * 0);
+                Simulated.Add(bullet);
+            }
+
+            Simulate(gameTime);
             base.Update(gameTime);
         }
 
-        void UpdateSprite(GameTime gameTime)
+        Vector2 WorldToScreen(Vector2 pos)
         {
-            // Move the sprite by speed, scaled by elapsed time.
-            spritePosition +=
-                spriteSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-            int MaxX =
-                graphics.GraphicsDevice.Viewport.Width - myTexture.Width;
-            int MinX = 0;
-            int MaxY =
-                graphics.GraphicsDevice.Viewport.Height - myTexture.Height;
-            int MinY = 0;
-
-            // Check for bounce.
-            if (spritePosition.X > MaxX)
-            {
-                spriteSpeed.X *= -1;
-                spritePosition.X = MaxX;
-            }
-
-            else if (spritePosition.X < MinX)
-            {
-                spriteSpeed.X *= -1;
-                spritePosition.X = MinX;
-            }
-
-            if (spritePosition.Y > MaxY)
-            {
-                spriteSpeed.Y *= -1;
-                spritePosition.Y = MaxY;
-            }
-
-            else if (spritePosition.Y < MinY)
-            {
-                spriteSpeed.Y *= -1;
-                spritePosition.Y = MinY;
-            }
+            return pos;
         }
+
+        void SimulateEntity(Entity a, Entity b)
+        {
+
+        }
+
+        Vector2 Projection(Vector2 a, Vector2 b)
+        {
+            return (Vector2.Dot(a, b)/ (Vector2.Dot(b, b)) * b);
+        }
+
+        void HandleCollision(Mobile a, Mobile b)
+        {
+            Vector2 aToB = b.GetCenterPosition() - a.GetCenterPosition();
+            aToB.Normalize();               // Unit vector representing angle from A to B            
+            Vector2 netVel = a.GetVelocity() - b.GetVelocity();
+            if (netVel.X == 0 && netVel.Y == 0)
+            {
+                netVel = a.GetCenterPosition() - b.GetCenterPosition();
+                netVel *= 5;
+            }
+            float netVelLen = netVel.Length();
+
+            Vector2 deflectionAngle = Projection(netVel, new Vector2(-aToB.Y, aToB.X) );
+            deflectionAngle.Normalize();
+            //netVel.Normalize();            
+            // a will bounce on deflectionAngle, b will bounce on aToB
+            // For testing, assume equal mass
+            a.SetVelocity(deflectionAngle * netVelLen / 2);
+            b.SetVelocity(aToB * netVelLen / 2);
+
+        }
+
+        void SimulateCollision(double deltaT)
+        {
+            List<Mobile> toRemove = new List<Mobile>();
+            foreach (Mobile ent in Simulated)
+            {
+                if (ent.Type == Entity.EntityType.VESSEL)
+                {
+                    Vessel ves = (Vessel)ent;
+                    if (ves != null)
+                    {
+                        ves.RotateToWanted(deltaT);
+                        // Calculate collision and adjust velocity                        
+                    }
+                }
+
+                // Update our velocity with the acceleration
+                //ent.SetVelocity(ent.GetVelocity() + ent.GetAcceleration() * (float)deltaT);
+                ent.SpeedUpToWanted(deltaT);
+                //ent.CheckSpeed();
+                Vector2 oldPos = ent.GetCenterPosition();
+                Vector2 posBack = new Vector2(oldPos.X, oldPos.Y);
+                // Calculate the wanted position by adding the velocity vector times deltaT
+                ent.PositionWanted = ent.GetCenterPosition() + (ent.GetVelocity() * (float)deltaT);
+                // If we are a vessel, do our rotationwanted calculations here
+                ent.SetCenterPosition(ent.PositionWanted);
+
+                foreach (Mobile otherEnt in Simulated)
+                {
+                    // TODO: Add collision!
+                    if (!ent.CanCollide)              // If collision is not enabled for the entity, do not collide
+                        break;
+                    if ((!ent.CollideWithOwnSide && !otherEnt.CollideWithOwnSide) && ent.Side == otherEnt.Side)
+                        continue;                     // If they're on the same side and they aren't supposed to collide with same side, do not collide
+                    if (ent == otherEnt)
+                        continue;
+                    bool colliding;
+                    if (ent.IsCollidingWith(otherEnt))
+                    {
+                        HandleCollision(ent, otherEnt);
+                        ent.SetCenterPosition(posBack);
+                        ent.PositionWanted = posBack;
+                    }
+                }
+                
+                
+
+                float halfWidth = ent.GetBoundingBoxNonRotated().Width / 2;
+                float halfHeight = ent.GetBoundingBoxNonRotated().Height / 2;
+                bool OutOfBounds = false;
+                // Make sure we aren't outside of the boundaries
+                if (ent.PositionWanted.X - halfWidth < Boundaries.X)            // Going through left wall
+                {
+                    ent.PositionWanted = new Vector2(Boundaries.X + halfWidth, ent.PositionWanted.Y);
+                    ent.SetVelocity(-ent.GetVelocity().X * ent.Elasticity, ent.GetVelocity().Y);
+                    OutOfBounds = true;
+                }
+                else if (ent.PositionWanted.X + halfWidth > Boundaries.Width)   // Going through right wall
+                {
+                    ent.PositionWanted = new Vector2(Boundaries.Width - halfWidth, ent.PositionWanted.Y);
+                    ent.SetVelocity(-ent.GetVelocity().X * ent.Elasticity, ent.GetVelocity().Y);
+                    OutOfBounds = true;
+                }
+                if (ent.PositionWanted.Y - halfHeight < Boundaries.Y)           // Going through top wall
+                {
+                    ent.PositionWanted = new Vector2(ent.PositionWanted.X, Boundaries.Y + halfHeight);
+                    ent.SetVelocity(ent.GetVelocity().X, -ent.GetVelocity().Y * ent.Elasticity);
+                    OutOfBounds = true;
+                }
+                else if (ent.PositionWanted.Y + halfHeight > Boundaries.Height) // Going through bottom wall
+                {
+                    ent.PositionWanted = new Vector2(ent.PositionWanted.X, Boundaries.Height - halfHeight);
+                    ent.SetVelocity(ent.GetVelocity().X, -ent.GetVelocity().Y * ent.Elasticity);
+                    OutOfBounds = true;
+                }
+                               
+
+                // All should be well at this point, set our new position
+                ent.SetCenterPosition(ent.PositionWanted);
+                if (ent.Type == Entity.EntityType.PROJECTILE)                
+                {
+                    Projectile proj = (Projectile)ent;
+                    if (proj != null)
+                    {
+                        if (OutOfBounds)
+                            toRemove.Add(proj);
+                    }
+                }
+                
+            }
+            foreach (Mobile ent in toRemove)
+            {
+                Simulated.Remove(ent);
+            }
+            
+        }
+
+        void Simulate(GameTime gameTime)
+        {
+            
+            // For each simulated entity, calculate the wanted position then do collision detection as well as draw
+            double deltaT = gameTime.ElapsedGameTime.TotalSeconds;           // We'll use seconds for the sake of simplicity
+            SimulateCollision(deltaT);
+        }
+
+        void DrawLine(SpriteBatch sb, Vector2 start, Vector2 end)
+        {
+            Vector2 edge = end - start;
+            // calculate angle to rotate line
+            float angle =
+                (float)Math.Atan2(edge.Y, edge.X);
+
+
+            sb.Draw(BoundingBoxTexture,
+                new Rectangle(// rectangle defines shape of line and position of start of line
+                    (int)start.X,
+                    (int)start.Y,
+                    (int)edge.Length(), //sb will strech the texture to fill this rectangle
+                    1), //width of line, change this to make thicker line
+                null,
+                Color.Red, //colour of line
+                angle,     //angle of line (calulated above)
+                new Vector2(0, 0), // point in line about which to rotate
+                SpriteEffects.None,
+                0);
+
+        }
+        
 
         /// <summary>
         /// This is called when the game should draw itself.
@@ -134,11 +320,30 @@ namespace SpriteTest
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
+            // For debugging, draw hit boxes
+            
 
+            
+            
             // TODO: Add your drawing code here
             // Draw the sprite.
             spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend);
-            spriteBatch.Draw(myTexture, spritePosition, Color.White);
+            foreach (Mobile ent in Simulated) {
+                Texture2D tex = ent.Model;
+                Vector2 screenPos = WorldToScreen(ent.GetCenterPosition());
+                // We want things drawn at the center of their position, not the top left
+                Vector2 offset = new Vector2(tex.Width / 2, tex.Height / 2);
+                //screenPos -= offset;
+                
+                spriteBatch.Draw(tex, screenPos, null, Color.White, -ent.Rotation, ent.GetOrigin(), Scale, Microsoft.Xna.Framework.Graphics.SpriteEffects.None, 1);
+
+                // Hitbox drawing
+                BoxWithPoints hitBox = ent.GetBoundingBoxPointsRotated();
+                DrawLine(spriteBatch, hitBox.P1, hitBox.P2);
+                DrawLine(spriteBatch, hitBox.P2, hitBox.P3);
+                DrawLine(spriteBatch, hitBox.P3, hitBox.P4);
+                DrawLine(spriteBatch, hitBox.P1, hitBox.P4);
+            }
             spriteBatch.End();
 
             base.Draw(gameTime);

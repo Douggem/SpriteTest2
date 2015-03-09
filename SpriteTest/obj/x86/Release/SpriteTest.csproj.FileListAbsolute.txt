@@ -1,0 +1,7 @@
+C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\Redbig.xnb
+C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\Tracer.xnb
+C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\SpriteTest.exe
+C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\SpriteTest.pdb
+C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\obj\x86\Release\Microsoft.Xna.Framework.RuntimeProfile.txt
+C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\obj\x86\Release\SpriteTest.exe
+C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\obj\x86\Release\SpriteTest.pdb

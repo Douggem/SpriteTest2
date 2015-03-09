@@ -7,7 +7,7 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Debug\Content\Redbig.xnb</Output>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\Redbig.xnb</Output>
       <Time>2015-03-02T19:12:07.7957219-05:00</Time>
     </Item>
     <Item>
@@ -16,19 +16,19 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Debug\Content\Tracer.xnb</Output>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\Tracer.xnb</Output>
       <Time>2015-03-06T22:18:50.2193539-05:00</Time>
     </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>
       <TargetPlatform>Windows</TargetPlatform>
       <TargetProfile>Reach</TargetProfile>
-      <BuildConfiguration>Debug</BuildConfiguration>
-      <CompressContent>false</CompressContent>
+      <BuildConfiguration>Release</BuildConfiguration>
+      <CompressContent>true</CompressContent>
       <RootDirectory>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTestContent\</RootDirectory>
       <LoggerRootDirectory>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\</LoggerRootDirectory>
-      <IntermediateDirectory>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTestContent\obj\x86\Debug\</IntermediateDirectory>
-      <OutputDirectory>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Debug\Content\</OutputDirectory>
+      <IntermediateDirectory>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTestContent\obj\x86\Release\</IntermediateDirectory>
+      <OutputDirectory>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\</OutputDirectory>
     </Settings>
     <Assemblies>
       <Assembly>
