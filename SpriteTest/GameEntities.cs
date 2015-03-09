@@ -254,26 +254,26 @@ namespace SpriteTest
 
     class Mobile : Entity
     {
-        public Vector2 VelocityWanted;         // Set VelocityWanted in the direction we want to go at max speed and handle smothing in the simulation
+        public Vector2 VelocityWanted;          // Set VelocityWanted in the direction we want to go at max speed and handle smoothing in the simulation
             
-        public Vector2 PositionWanted          // During simulation this will be set to the future state before collision is done
+        public Vector2 PositionWanted           // During simulation this will be set to the future state before collision is done
             { get; set; }
-        public float RotationWanted;
+        public float RotationWanted;            // Set the direction we WANT to face, so we can do smooth transitions when turning
         
-        public float MaxSpeed
+        public float MaxSpeed                   // If we are above max speed, we will DAMPEN down to max speed, so it's a 'soft' max not a 'hard' max
             { get; set; }
-        public float ThrustAcceleration        // Not only the "gas" if the entity wants to move, but also the "brake" in the event of stopping or inertial dampening.
+        public float ThrustAcceleration         // Not only the "gas" if the entity wants to move, but also the "brake" in the event of stopping or inertial dampening.
             { get; set; } 
-        float Hull                      // i.e. HP, health, life, etc.
+        float Hull                              // i.e. HP, health, life, etc.
             { get; set; } 
-        float Mass;                     // Used in collision calculations to calculate impulse
-        float MassInv;                  // Pre-calculated to avoid divide by zero
-        Rectangle BoundingBox;          // Used for collision, obviously
-        public bool CanCollide                 // If false, will not collide with anything
+        float Mass;                             // Used in collision calculations to calculate impulse
+        float MassInv;                          // Pre-calculated to avoid divide by zero
+        Rectangle BoundingBox;                  // Used for collision, obviously
+        public bool CanCollide                  // If false, will not collide with anything
             { get; set; } 
-        public bool CollideWithOwnSide         // If false, will not collide with entities of same side
+        public bool CollideWithOwnSide          // If false, will not collide with entities of same side
             { get; set; } 
-        public bool DampenInnertia             // If true, the object will automatically brake itself if not accelerating.
+        public bool DampenInnertia              // If true, the object will automatically brake itself if not accelerating.
             { get; set; }
         public bool IsDestroyed 
             { get; set; }
