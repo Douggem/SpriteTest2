@@ -1,4 +1,11 @@
-﻿using System;
+﻿/* 
+ * TODO:
+ * Add Collidable interface or something
+ * Fix collision detection
+ * Add impulse handling
+ * */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -159,10 +166,6 @@ namespace SpriteTest
                 return true;
             return false;
         }
-
-        
-
-        
     }
     /*
      * The base class used by all game entities, gives the basic framework for any game object
@@ -170,32 +173,33 @@ namespace SpriteTest
      * */
     class Entity
     {
-        public enum EntitySide
+        public enum EntitySide              // Subclasses of entity can be configured to not collide with objects of the same side
         {
             PLAYER,
             ENEMY,
             NEUTRAL
         };
 
-        public enum EntityType          // Save ourselves some processing power doing dynamic casts
+        public enum EntityType              // Save ourselves some processing power doing dynamic casts
         {
             ENTITY,
             MOBILE,
             PICKUP,
             PROJECTILE,
             VESSEL
-        }
-        public EntitySide Side;                // Lets AI know what to shoot at, and prevents enemies from colliding with one another
-        public EntityType Type;                // We treat our base types differently, we can use this instead of dynamic casting
-        public Texture2D Model                // The dimensions of the image make our bounding box, so cut off all the extra space
+        };
+
+        public EntitySide Side;                 // Lets AI know what to shoot at, and prevents enemies from colliding with one another
+        public EntityType Type;                 // We treat our base types differently, we can use this instead of dynamic casting
+        public Texture2D Model                  // The dimensions of the image make our bounding box, so cut off all the extra space
             { get; set;}
-        protected Vector2 Position;  
+        protected Vector2 Position;             // Duh, position in game space.  Represents top left 
         public float Elasticity                 // Coefficient applied to velocity when hit with a force.  Elasticity of 0 absorbs all impact, 1 bounces it all off                                    
             { get; set; }                       // So with 1, if you hit something at 100km/h you will bounce off at 100km/h in the opposite direction
-        protected Vector2 Velocity;
-        protected Vector2 Acceleration;
+        protected Vector2 Velocity;             // Current velocity
+        protected Vector2 Acceleration;         // Current acceleration, will be applied to velocity every tick
         private float _rotation;
-        public float Rotation                 // In radians
+        public float Rotation                   // In radians, use setter so we can constrain it between 0 and 2pi
         {
             get
             {
@@ -300,6 +304,20 @@ namespace SpriteTest
             BoundingBox = new Rectangle(model.Bounds.X, model.Bounds.Y, model.Bounds.Width, model.Bounds.Height);
         }
 
+        public void AddImpulse(Vector2 impulse)
+        {
+            // impulse is in newtons
+            // Handle as instantaneous change in velocity, each newton will accelerate by 1m/s * massinv
+            impulse *= MassInv;
+            Velocity += impulse;
+        }
+
+        public Vector2 GetForce()
+        {
+            Vector2 force = MassInv * Velocity;
+            return force;
+        }
+
         public Vector2 GetCenterPositionWanted()
         {
             Vector2 result = PositionWanted + Origin;
@@ -308,7 +326,7 @@ namespace SpriteTest
 
         public Rectangle GetBoundingBoxNonRotated()
         {
-            // Return a copy so that it can't be edited 
+            // Return a copy so that it can't be edited -  maybe not necessary?
             Vector2 position = GetPosition();
             return new Rectangle((int)(BoundingBox.X + position.X), (int)(BoundingBox.Y + position.Y), BoundingBox.Width, BoundingBox.Height);
         }
@@ -327,6 +345,9 @@ namespace SpriteTest
             return result;
         }
 
+        /*
+         * If we're over max speed, dampen down to max speed gradually
+         * */
         public void CheckSpeed()
         {
             if (Velocity.X == 0 && Velocity.Y == 0)
@@ -339,6 +360,9 @@ namespace SpriteTest
             }
         }
 
+        /*
+         * Speed up to SpeedWanted gradually
+         * */
         public void SpeedUpToWanted(double deltaT)
         {
             if (VelocityWanted.X == 0 && VelocityWanted.Y == 0 && !DampenInnertia)
@@ -390,14 +414,24 @@ namespace SpriteTest
         float PickupRadius;             // If within this distance to pickup, you pick it up
     }
 
+    /*
+     * Projectile are bullets, missiles, etc.
+     * */
     class Projectile : Mobile
     {
-        float BaseDamage;               // Base damage the projectile does to a target on collision
-        float HullDamageCoef;           // Coefficient if it hits only hull
-        float ShieldDamageCoef;         // Coefficient if it hits shields
-        float ExplosionRadius;          // If > 0, the projectile explodes on contact and damages entities within this radius.
-        float TimeToLive;
-        float InitTime;
+        public float BaseDamage               // Base damage the projectile does to a target on collision
+            { get; set; }
+        public float HullDamageCoef           // Coefficient if it hits only hull
+            { get; set; }
+        public float ShieldDamageCoef         // Coefficient if it hits shields
+            { get; set; }
+        public float ExplosionRadius          // If > 0, the projectile explodes on contact and damages entities within this radius.
+            { get; set; }
+        public float TimeToLive               // After TimeToLive seconds, this projectile should be removed from the simulation
+            { get; set; }
+        public float InitTime                 // The ticktime the projectile was created
+            { get; set; }
+
         public Projectile(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass)
             : base(model, side, pos, rot, hull, mass)
         {
@@ -412,7 +446,7 @@ namespace SpriteTest
     {        
         float RotationSpeed;            // In rads/s
         float Armor;                    // Will dampen damage to the hull
-
+        
         public Vessel(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass, float armor = 0)
             : base(model, side, pos, rot, hull, mass)
         {
@@ -423,6 +457,9 @@ namespace SpriteTest
 
         public Vessel() {  }
 
+        /*
+         * Rotate as much as we can (RotationSpeed rads/s) toward our target rotation.
+         * */
         public void RotateToWanted(double deltaT)
         {
             double radsToGo = Rotation - RotationWanted;
@@ -431,7 +468,7 @@ namespace SpriteTest
                 direction = 1;
             radsToGo = Math.Abs(radsToGo);
 
-            
+            // Don't go the wrong direction, silly
             if (RotationWanted < 0)
                 RotationWanted += 2 * (float)Math.PI;
             else if (RotationWanted > 2 * (float)Math.PI)
@@ -451,15 +488,47 @@ namespace SpriteTest
             }
             // If we can not, rotate as much as we can toward the target rotation
             Rotation += direction * RotationSpeed * (float)deltaT;
-        }
-
-        
+        }        
     }
 
     class Shielded : Vessel
     {
-        float MaxShields;               // Maximum shield amount, shields will recharge to this amount
-        float Shields;                  // Current amount of shields.  Below 20%, damage bleeds through to hull
-        float ShieldRechargeRate;       // Rate in shields/s of recharge
+        float MaxShields;                           // Maximum shield amount, shields will recharge to this amount
+        float Shields;                              // Current amount of shields.  Below 20%, damage bleeds through to hull
+        float ShieldRechargeRate;                   // Rate in shields/s of recharge
+    }
+
+    /*
+     * ***********************************************
+     * Info holders for building predefined entities
+     * ***********************************************
+     * */
+
+    // Contains information to build a predefined Entity from
+    class EntityInfo
+    {
+        Texture2D Model;
+        float Elasticity;
+        Entity.EntitySide Side;
+    }
+
+    // Contains information to build a predefined Mobile from
+    class MobileInfo : EntityInfo
+    {
+        public float MaxSpeed;                      // If we are above max speed, we will DAMPEN down to max speed, so it's a 'soft' max not a 'hard' max        
+        public float ThrustAcceleration;            // Not only the "gas" if the entity wants to move, but also the "brake" in the event of stopping or inertial dampening.        
+        float Hull;                                 // i.e. HP, health, life, etc.        
+        float Mass;                                 // Used in collision calculations to calculate impulse
+        float MassInv;                              // Pre-calculated to avoid divide by zero
+        Rectangle BoundingBox;                      // Used for collision, obviously
+        public bool CanCollide;                     // If false, will not collide with anything        
+        public bool CollideWithOwnSide;             // If false, will not collide with entities of same side        
+        public bool DampenInnertia;                 // If true, the object will automatically brake itself if not accelerating.
+    }
+
+    class VesselInfo : MobileInfo
+    {
+        float RotationSpeed;                        // In rads/s
+        float Armor;                                // Will dampen damage to the hull
     }
 }

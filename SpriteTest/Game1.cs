@@ -220,7 +220,7 @@ namespace SpriteTest
                         continue;                     // If they're on the same side and they aren't supposed to collide with same side, do not collide
                     if (ent == otherEnt)
                         continue;
-                    bool colliding;
+                    
                     if (ent.IsCollidingWith(otherEnt))
                     {
                         HandleCollision(ent, otherEnt);
@@ -228,8 +228,6 @@ namespace SpriteTest
                         ent.PositionWanted = posBack;
                     }
                 }
-                
-                
 
                 float halfWidth = ent.GetBoundingBoxNonRotated().Width / 2;
                 float halfHeight = ent.GetBoundingBoxNonRotated().Height / 2;
@@ -269,6 +267,8 @@ namespace SpriteTest
                     if (proj != null)
                     {
                         if (OutOfBounds)
+                            toRemove.Add(proj);
+                        else if (Environment.TickCount - proj.InitTime > proj.TimeToLive * 1000)
                             toRemove.Add(proj);
                     }
                 }
@@ -321,9 +321,6 @@ namespace SpriteTest
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
             // For debugging, draw hit boxes
-            
-
-            
             
             // TODO: Add your drawing code here
             // Draw the sprite.
