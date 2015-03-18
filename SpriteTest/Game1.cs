@@ -18,8 +18,10 @@ namespace SpriteTest
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        GamePadState   OldKeyboardState,           // We will compare the new and old keyboard states so we know if a key was freshly pressed, held, or released
-                        CurrentKeyboardState;
+        GamePadState   OldGamepadState,           // We will compare the new and old keyboard states so we know if a key was freshly pressed, held, or released
+                        CurrentGamepadState;
+        MouseState CurrentMouseState;
+        KeyboardState CurrentKeyboardState;
         List<Entity> NonSimulated;                      // We shouldn't need random access to our game entities, so a list will suffice and be more efficient than an array.
         List<Mobile> Simulated;
         Vessel Player;
@@ -63,7 +65,7 @@ namespace SpriteTest
 
         // Store some information about the sprite's motion.
         Vector2 spriteSpeed = new Vector2(50.0f, 50.0f);
-
+        ProjectileInfo BasicBullet;
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
         /// all of your content.
@@ -86,6 +88,10 @@ namespace SpriteTest
             // For hitbox drawing            
             BoundingBoxTexture = new Texture2D(GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
             BoundingBoxTexture.SetData(new[] { Color.White }); // so that we can draw whatever color we want on top of it
+            BasicBullet = new ProjectileInfo(TracerTexture, 0, 100, 6);
+            Weapon wep = new Weapon(BasicBullet, 400, 1);
+            Player.CurrentWeapon = wep;
+            enemy.CurrentWeapon = wep;
         }
 
         /// <summary>
@@ -105,14 +111,18 @@ namespace SpriteTest
         protected override void Update(GameTime gameTime)
         {
             // Get the state of the controller
-            CurrentKeyboardState = GamePad.GetState(PlayerIndex.One, GamePadDeadZone.Circular);
-
-            if (CurrentKeyboardState.Buttons.Back == ButtonState.Pressed)
+            CurrentGamepadState = GamePad.GetState(PlayerIndex.One, GamePadDeadZone.Circular);
+            if (CurrentGamepadState.IsConnected)
+            {
+                int nig = 3;
+            }
+            CurrentMouseState = Mouse.GetState();
+            if (CurrentGamepadState.Buttons.Back == ButtonState.Pressed)
                 this.Exit();
             // Get analog stick input
-            Vector2 leftStick = CurrentKeyboardState.ThumbSticks.Left;
-            Vector2 rightStick = CurrentKeyboardState.ThumbSticks.Right;
-            bool fireButton = CurrentKeyboardState.IsButtonDown(Buttons.RightShoulder);
+            Vector2 leftStick = CurrentGamepadState.ThumbSticks.Left;
+            Vector2 rightStick = CurrentGamepadState.ThumbSticks.Right;
+            bool fireButton = CurrentGamepadState.IsButtonDown(Buttons.RightShoulder);
             if (!(rightStick.X == 0 && rightStick.Y == 0) )
             {
                 rightStick.Normalize();
@@ -135,13 +145,18 @@ namespace SpriteTest
 
             if (fireButton)
             {
-                Projectile bullet = new Projectile(TracerTexture, Entity.EntitySide.PLAYER, Player.GetCenterPosition(), Player.Rotation, 0, 1000);
+                if (Player.CanFire())
+                {
+                    Projectile bullet = Player.Fire();
+                    Simulated.Add(bullet);
+                }
+                /*Projectile bullet = new Projectile(TracerTexture, Entity.EntitySide.PLAYER, Player.GetCenterPosition(), Player.Rotation, 0, 1000);
                 float angle = Player.Rotation + (float)Math.PI / 2;
                 bullet.MaxSpeed = 400;
                 Vector2 angleVector = new Vector2((float)Math.Cos(angle), -(float)Math.Sin(angle));
                 bullet.SetVelocity(angleVector * 2*bullet.MaxSpeed + Player.GetVelocity());
                 bullet.SetVelocityWanted(angleVector * 0);
-                Simulated.Add(bullet);
+                Simulated.Add(bullet);*/
             }
 
             Simulate(gameTime);
@@ -190,7 +205,9 @@ namespace SpriteTest
             List<Mobile> toRemove = new List<Mobile>();
             foreach (Mobile ent in Simulated)
             {
-                if (ent.Type == Entity.EntityType.VESSEL)
+                ent.Update(deltaT);
+
+                /*if (ent.Type == Entity.EntityType.VESSEL)
                 {
                     Vessel ves = (Vessel)ent;
                     if (ves != null)
@@ -198,11 +215,11 @@ namespace SpriteTest
                         ves.RotateToWanted(deltaT);
                         // Calculate collision and adjust velocity                        
                     }
-                }
+                }*/
 
                 // Update our velocity with the acceleration
                 //ent.SetVelocity(ent.GetVelocity() + ent.GetAcceleration() * (float)deltaT);
-                ent.SpeedUpToWanted(deltaT);
+                
                 //ent.CheckSpeed();
                 Vector2 oldPos = ent.GetCenterPosition();
                 Vector2 posBack = new Vector2(oldPos.X, oldPos.Y);

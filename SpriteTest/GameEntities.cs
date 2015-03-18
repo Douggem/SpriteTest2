@@ -230,9 +230,26 @@ namespace SpriteTest
             Elasticity = 0.8F;
         }
 
+        public Entity(EntityInfo info, Vector2 pos, float rot)
+        {
+            Type = EntityType.ENTITY;
+            Model = info.Model;
+            Elasticity = info.Elasticity;
+            Side = info.Side;
+            Position = pos;
+            Rotation = rot;
+            Acceleration = new Vector2(0, 0);
+            Origin = new Vector2(Model.Width / 2, Model.Height / 2);
+        }
+
         public Entity()                 // Only here to prevent compiler errors for inherited classes, remove before production
         {
 
+        }
+
+        public virtual void Update(double deltaT) 
+        {
+            // Do nothing by default
         }
                 
         public Vector2 GetPosition() { return Position; }
@@ -286,6 +303,7 @@ namespace SpriteTest
         public Mobile(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass) 
             : base(model, side, pos, rot)
         {
+            Type = EntityType.MOBILE;
             Hull = hull;
             Mass = mass;
             if (Mass != 0)
@@ -299,9 +317,34 @@ namespace SpriteTest
             RotationWanted = 0;
             MaxSpeed = 400;
             ThrustAcceleration = 2000;
-            VelocityWanted = new Vector2(0, 0);
-            RotationWanted = 0;
+            VelocityWanted = new Vector2(0, 0);            
             BoundingBox = new Rectangle(model.Bounds.X, model.Bounds.Y, model.Bounds.Width, model.Bounds.Height);
+        }
+
+        public Mobile(MobileInfo info, Vector2 pos, float rot)
+            : base(info, pos, rot)
+        {
+            Type = EntityType.MOBILE;
+            Hull = info.Hull;
+            Mass = info.Mass;
+            if (Mass != 0)
+                MassInv = 1 / Mass;
+            else
+                MassInv = 0;
+            CanCollide = info.CanCollide;
+            CollideWithOwnSide = info.CollideWithOwnSide;
+            IsDestroyed = false;
+            DampenInnertia = info.DampenInnertia;
+            RotationWanted = 0;
+            MaxSpeed = info.MaxSpeed;
+            ThrustAcceleration = info.ThrustAcceleration;
+            VelocityWanted = new Vector2(0, 0);
+            BoundingBox = new Rectangle(Model.Bounds.X, Model.Bounds.Y, Model.Bounds.Width, Model.Bounds.Height);
+        }
+
+        public override void Update(double deltaT) 
+        {
+            SpeedUpToWanted(deltaT);
         }
 
         public void AddImpulse(Vector2 impulse)
@@ -440,13 +483,29 @@ namespace SpriteTest
             TimeToLive = 6;
             InitTime = Environment.TickCount;
         }
+
+        public Projectile(ProjectileInfo info, Vector2 pos, float rot)
+            : base(info, pos, rot)
+        {
+            Type = EntityType.PROJECTILE;
+            DampenInnertia = false;
+            TimeToLive = info.TimeToLive;
+            InitTime = Environment.TickCount;
+        }
+
+
     }
 
+    /*
+     * Vessels are mobile entities that can fire projectiles 
+     * */
     class Vessel : Mobile
     {        
         float RotationSpeed;            // In rads/s
         float Armor;                    // Will dampen damage to the hull
-        
+        public Weapon CurrentWeapon
+        { get; set; }
+
         public Vessel(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass, float armor = 0)
             : base(model, side, pos, rot, hull, mass)
         {
@@ -456,6 +515,15 @@ namespace SpriteTest
         }
 
         public Vessel() {  }
+
+        public override void Update(double deltaT) 
+        {
+            RotateToWanted(deltaT);
+            SpeedUpToWanted(deltaT);
+            if (CurrentWeapon.ShotTimer > 0)
+                CurrentWeapon.ShotTimer -= (float)deltaT * 1000;
+            else CurrentWeapon.ShotTimer = 0;
+        }
 
         /*
          * Rotate as much as we can (RotationSpeed rads/s) toward our target rotation.
@@ -488,14 +556,48 @@ namespace SpriteTest
             }
             // If we can not, rotate as much as we can toward the target rotation
             Rotation += direction * RotationSpeed * (float)deltaT;
-        }        
+        }
+
+        public virtual bool CanFire()
+        {
+            if (CurrentWeapon.ShotTimer <= 0)
+                return true;
+            return false;
+        }
+
+        public virtual Projectile Fire()
+        {
+            float angle = Rotation + (float)Math.PI / 2;
+            Projectile bullet = new Projectile(CurrentWeapon.Munition, GetCenterPosition(), angle);
+            Vector2 angleVector = new Vector2((float)Math.Cos(angle), -(float)Math.Sin(angle));
+            CurrentWeapon.ShotTimer = CurrentWeapon.ShotDelay;
+            bullet.SetVelocity(angleVector * 2 * bullet.MaxSpeed + GetVelocity());
+            bullet.SetVelocityWanted(angleVector * 0);
+            bullet.Side = Side;
+            return bullet;
+        }
     }
 
     class Shielded : Vessel
     {
-        float MaxShields;                           // Maximum shield amount, shields will recharge to this amount
-        float Shields;                              // Current amount of shields.  Below 20%, damage bleeds through to hull
-        float ShieldRechargeRate;                   // Rate in shields/s of recharge
+        public float MaxShields;                           // Maximum shield amount, shields will recharge to this amount
+        public float Shields;                              // Current amount of shields.  Below 20%, damage bleeds through to hull
+        public float ShieldRechargeRate;                   // Rate in shields/s of recharge
+    }
+
+    class Weapon {
+        public ProjectileInfo Munition;
+        public float InitSpeed;                            // Velocity (relative to vessel in direction of heading) the projectile will be launched at
+        public float ShotDelay;                            // Time between shots, i.e. rate of fire
+        public float ShotTimer;                            // Set to ShotDelay when shot, don't fire until reaches 0
+
+        public Weapon(ProjectileInfo munition, float speed, float delay)
+        {
+            Munition = munition;
+            InitSpeed = speed;
+            ShotDelay = delay;
+            ShotTimer = 0;
+        }
     }
 
     /*
@@ -507,28 +609,93 @@ namespace SpriteTest
     // Contains information to build a predefined Entity from
     class EntityInfo
     {
-        Texture2D Model;
-        float Elasticity;
-        Entity.EntitySide Side;
+        public Texture2D Model
+            { get; set; }
+        public float Elasticity
+            { get; set; }
+        public Entity.EntitySide Side
+            { get; set; }
+
+        public EntityInfo(Texture2D model)
+        {
+            Model = model;
+            Side = Entity.EntitySide.NEUTRAL;       // You need to be sure to set the side when you fire!
+            Elasticity = 0.75F;
+        }
     }
 
     // Contains information to build a predefined Mobile from
     class MobileInfo : EntityInfo
     {
-        public float MaxSpeed;                      // If we are above max speed, we will DAMPEN down to max speed, so it's a 'soft' max not a 'hard' max        
-        public float ThrustAcceleration;            // Not only the "gas" if the entity wants to move, but also the "brake" in the event of stopping or inertial dampening.        
-        float Hull;                                 // i.e. HP, health, life, etc.        
-        float Mass;                                 // Used in collision calculations to calculate impulse
-        float MassInv;                              // Pre-calculated to avoid divide by zero
-        Rectangle BoundingBox;                      // Used for collision, obviously
-        public bool CanCollide;                     // If false, will not collide with anything        
-        public bool CollideWithOwnSide;             // If false, will not collide with entities of same side        
-        public bool DampenInnertia;                 // If true, the object will automatically brake itself if not accelerating.
+        public float MaxSpeed                      // If we are above max speed, we will DAMPEN down to max speed, so it's a 'soft' max not a 'hard' max        
+            { get; set; }
+        public float ThrustAcceleration            // Not only the "gas" if the entity wants to move, but also the "brake" in the event of stopping or inertial dampening.        
+            { get; set; }
+        public float Hull                                 // i.e. HP, health, life, etc.        
+            { get; set; }
+        public float Mass                                 // Used in collision calculations to calculate impulse
+            { get; set; }
+        public float MassInv                              // Pre-calculated to avoid divide by zero        
+            { get; set; }
+        public bool CanCollide                     // If false, will not collide with anything        
+            { get; set; }
+        public bool CollideWithOwnSide             // If false, will not collide with entities of same side        
+            { get; set; }
+        public bool DampenInnertia                 // If true, the object will automatically brake itself if not accelerating.
+            { get; set; }
+
+        public MobileInfo(Texture2D model, float hull, float mass)
+            : base(model)
+        {
+            Hull = hull;
+            Mass = mass;
+            if (Mass != 0)
+                MassInv = 1 / Mass;
+            else
+                MassInv = 0;
+            CanCollide = true;
+            CollideWithOwnSide = false;            
+            DampenInnertia = true;            
+            MaxSpeed = 400;
+            ThrustAcceleration = 2000;            
+        }
+    }
+
+    class ProjectileInfo : MobileInfo
+    {
+        public float BaseDamage               // Base damage the projectile does to a target on collision
+        { get; set; }
+        public float HullDamageCoef           // Coefficient if it hits only hull
+        { get; set; }
+        public float ShieldDamageCoef         // Coefficient if it hits shields
+        { get; set; }
+        public float ExplosionRadius          // If > 0, the projectile explodes on contact and damages entities within this radius.
+        { get; set; }
+        public float TimeToLive               // After TimeToLive seconds, this projectile should be removed from the simulation
+        { get; set; }
+       
+
+        public ProjectileInfo(Texture2D model, float hull, float mass, float baseDamage)
+            : base(model,  hull, mass)
+        {
+            BaseDamage = baseDamage;
+            HullDamageCoef = 1;
+            ShieldDamageCoef = 1;
+            ExplosionRadius = 0;
+            TimeToLive = 6;            
+        }
     }
 
     class VesselInfo : MobileInfo
     {
         float RotationSpeed;                        // In rads/s
         float Armor;                                // Will dampen damage to the hull
+
+        public VesselInfo(Texture2D model, float hull, float mass, float armor)
+            : base(model,  hull, mass)
+        {
+            Armor = armor;
+            RotationSpeed = 4.0F;
+        }
     }
 }
