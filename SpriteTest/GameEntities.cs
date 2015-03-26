@@ -16,9 +16,15 @@ using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
-
+using AnimatedSprite;
 namespace SpriteTest
 {
+
+    static class RNG
+    {
+        public static Random Generator = new Random();
+    }
+
     static class CollisionMath {
         // Rotates a vertex around the origin with 'angle' radians
         public static Vector2 RotateVertexAroundOrigin(Vector2 p, float angle)
@@ -247,6 +253,15 @@ namespace SpriteTest
 
         }
 
+        public virtual void Draw(SpriteBatch spriteBatch, Vector2 screenPos, float scale)
+        {
+            Texture2D tex = Model;
+            
+            // We want things drawn at the center of their position, not the top left
+            Vector2 offset = new Vector2(tex.Width / 2, tex.Height / 2);
+            spriteBatch.Draw(tex, screenPos, null, Color.White, -Rotation, GetOrigin(), scale, Microsoft.Xna.Framework.Graphics.SpriteEffects.None, 1);            
+        }
+
         public virtual void Update(double deltaT) 
         {
             // Do nothing by default
@@ -272,6 +287,13 @@ namespace SpriteTest
         public void SetVelocity(Vector2 v) { Velocity = v; }
         public void SetCenterPosition(Vector2 p) { Position.X = p.X - Origin.X; Position.Y = p.Y - Origin.Y; }
     }
+
+    /*class Explosion : Entity
+    {
+        public Explosion(AnimatedTexture anim, Vector2 pos, float rot) 
+            : base(anim., side, pos, rot)
+
+    }*/
 
     class Mobile : Entity
     {
@@ -299,6 +321,10 @@ namespace SpriteTest
         public bool IsDestroyed 
             { get; set; }
         public float Speed;
+
+        // Animation for destruction
+        public AnimatedTexture DestructionAnimation
+            { get; set; }
 
         public Mobile(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass) 
             : base(model, side, pos, rot)
@@ -345,6 +371,17 @@ namespace SpriteTest
         public override void Update(double deltaT) 
         {
             SpeedUpToWanted(deltaT);
+        }
+
+        public virtual void OnCollide(Mobile collidedWith) {
+
+        }
+
+        public virtual void ApplyDamage(float dmg)
+        {
+            Hull -= dmg;
+            if (Hull < 0)
+                IsDestroyed = true;
         }
 
         public void AddImpulse(Vector2 impulse)
@@ -474,6 +511,8 @@ namespace SpriteTest
             { get; set; }
         public float InitTime                 // The ticktime the projectile was created
             { get; set; }
+        public float DeflectionChance
+            { get; set; }
 
         public Projectile(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass)
             : base(model, side, pos, rot, hull, mass)
@@ -482,6 +521,7 @@ namespace SpriteTest
             DampenInnertia = false;
             TimeToLive = 6;
             InitTime = Environment.TickCount;
+            DeflectionChance = 0.25F;
         }
 
         public Projectile(ProjectileInfo info, Vector2 pos, float rot)
@@ -491,9 +531,22 @@ namespace SpriteTest
             DampenInnertia = false;
             TimeToLive = info.TimeToLive;
             InitTime = Environment.TickCount;
+            DeflectionChance = 0.25F;
+            BaseDamage = info.BaseDamage;
         }
 
+        // Our base implementation of OnCollide is to do damage like a regular bullet and then disappear
+        public override void OnCollide(Mobile collidedWith)
+        {
+            // Only destroy the object if it did not deflect
+            float randNum = (float)RNG.Generator.NextDouble();
+            if (randNum > DeflectionChance)            
+            {
+                IsDestroyed = true;
+            }
+            collidedWith.ApplyDamage(BaseDamage);
 
+        }
     }
 
     /*
@@ -521,7 +574,7 @@ namespace SpriteTest
             RotateToWanted(deltaT);
             SpeedUpToWanted(deltaT);
             if (CurrentWeapon.ShotTimer > 0)
-                CurrentWeapon.ShotTimer -= (float)deltaT * 1000;
+                CurrentWeapon.ShotTimer -= (float)deltaT;
             else CurrentWeapon.ShotTimer = 0;
         }
 

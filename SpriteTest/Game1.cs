@@ -9,8 +9,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 
+
 namespace SpriteTest
-{
+{        
     /// <summary>
     /// This is the main type for your game
     /// </summary>
@@ -29,18 +30,22 @@ namespace SpriteTest
         float Scale = 1.0F;
         Texture2D BoundingBoxTexture;
         Texture2D TracerTexture;
+        Random RNG;
+
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             graphics.IsFullScreen = false;            
-            graphics.PreferredBackBufferWidth = 1024;
-            graphics.PreferredBackBufferHeight = 768;
+            graphics.PreferredBackBufferWidth = 1920;
+            graphics.PreferredBackBufferHeight = 1080;
             // For now, use screen edges as our boundary
             Boundaries = new Rectangle(0, 0, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
             Content.RootDirectory = "Content";
 
             Simulated = new List<Mobile>();
             NonSimulated = new List<Entity>();
+
+            RNG = new Random(Environment.TickCount);
         }
 
         /// <summary>
@@ -89,7 +94,7 @@ namespace SpriteTest
             BoundingBoxTexture = new Texture2D(GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
             BoundingBoxTexture.SetData(new[] { Color.White }); // so that we can draw whatever color we want on top of it
             BasicBullet = new ProjectileInfo(TracerTexture, 0, 100, 6);
-            Weapon wep = new Weapon(BasicBullet, 400, 1);
+            Weapon wep = new Weapon(BasicBullet, 400, .25F);
             Player.CurrentWeapon = wep;
             enemy.CurrentWeapon = wep;
         }
@@ -198,6 +203,9 @@ namespace SpriteTest
             a.SetVelocity(deflectionAngle * netVelLen / 2);
             b.SetVelocity(aToB * netVelLen / 2);
 
+            a.OnCollide(b);
+            b.OnCollide(a);
+
         }
 
         void SimulateCollision(double deltaT)
@@ -278,6 +286,7 @@ namespace SpriteTest
 
                 // All should be well at this point, set our new position
                 ent.SetCenterPosition(ent.PositionWanted);
+                // Remove projectiles that have gone out of bounds
                 if (ent.Type == Entity.EntityType.PROJECTILE)                
                 {
                     Projectile proj = (Projectile)ent;
@@ -285,10 +294,14 @@ namespace SpriteTest
                     {
                         if (OutOfBounds)
                             toRemove.Add(proj);
+                        
                         else if (Environment.TickCount - proj.InitTime > proj.TimeToLive * 1000)
                             toRemove.Add(proj);
                     }
                 }
+
+                if (ent.IsDestroyed)
+                    toRemove.Add(ent);
                 
             }
             foreach (Mobile ent in toRemove)
@@ -342,14 +355,9 @@ namespace SpriteTest
             // TODO: Add your drawing code here
             // Draw the sprite.
             spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend);
-            foreach (Mobile ent in Simulated) {
-                Texture2D tex = ent.Model;
+            foreach (Mobile ent in Simulated) {                
                 Vector2 screenPos = WorldToScreen(ent.GetCenterPosition());
-                // We want things drawn at the center of their position, not the top left
-                Vector2 offset = new Vector2(tex.Width / 2, tex.Height / 2);
-                //screenPos -= offset;
-                
-                spriteBatch.Draw(tex, screenPos, null, Color.White, -ent.Rotation, ent.GetOrigin(), Scale, Microsoft.Xna.Framework.Graphics.SpriteEffects.None, 1);
+                ent.Draw(spriteBatch, screenPos, Scale);
 
                 // Hitbox drawing
                 BoxWithPoints hitBox = ent.GetBoundingBoxPointsRotated();
