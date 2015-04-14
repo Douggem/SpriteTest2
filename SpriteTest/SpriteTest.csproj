@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="AnimatedTexture.cs" />
     <Compile Include="GameEntities.cs" />
+    <Compile Include="GameEntityInfos.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Game1.cs" />

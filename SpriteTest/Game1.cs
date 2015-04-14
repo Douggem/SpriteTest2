@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
-
+using AnimatedSprite;
 
 namespace SpriteTest
 {        
@@ -32,6 +32,11 @@ namespace SpriteTest
         Texture2D TracerTexture;
         Random RNG;
 
+        Dictionary<string, EntityInfo> EntityDic = new Dictionary<string, EntityInfo>();
+        Dictionary<string, MobileInfo> MobileDic = new Dictionary<string, MobileInfo>();
+        Dictionary<string, VesselInfo> VesselDic = new Dictionary<string, VesselInfo>();
+        Dictionary<string, ProjectileInfo> ProjectileDic = new Dictionary<string, ProjectileInfo>();
+        Dictionary<string, Weapon> WeaponDic = new Dictionary<string, Weapon>();
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -82,21 +87,32 @@ namespace SpriteTest
             myTexture = Content.Load<Texture2D>("Redbig");
             TracerTexture = Content.Load<Texture2D>("Tracer");
             // TODO: use this.Content to load your game content here
+            // Load the explosion animation
+            AnimatedTexture explosionTexture = new AnimatedTexture(Vector2.Zero, 0, 3, 0.5f, false);
+            TargetElapsedTime = TimeSpan.FromSeconds(1.0 / 60.0);
+            explosionTexture.Load(Content, "Exp_type_AL", 32, 60, 2);
+            ExplosionInfo explosionInfo = new ExplosionInfo("Exp_1", explosionTexture);
 
             Vessel player = new Vessel(myTexture, Entity.EntitySide.PLAYER, new Vector2(600, 600), 0, 100, 100);
             player.SetVelocity(50, 50);
             Simulated.Add(player);
             Player = player;
-            Vessel enemy = new Vessel(myTexture, Entity.EntitySide.ENEMY, new Vector2(200, 200), 0, 100, 100);
+            Vessel enemy = new Vessel(myTexture, Entity.EntitySide.ENEMY, new Vector2(200, 200), 0, 5, 100);
             enemy.DampenInnertia = false;
+            enemy.DestructionAnimation = explosionTexture;
             Simulated.Add(enemy);
             // For hitbox drawing            
             BoundingBoxTexture = new Texture2D(GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
             BoundingBoxTexture.SetData(new[] { Color.White }); // so that we can draw whatever color we want on top of it
-            BasicBullet = new ProjectileInfo(TracerTexture, 0, 100, 6);
-            Weapon wep = new Weapon(BasicBullet, 400, .25F);
+            BasicBullet = new ProjectileInfo("BasicBullet", TracerTexture, 0, 100, 6);
+            ProjectileDic.Add(BasicBullet.Name, BasicBullet);
+            Weapon wep = new Weapon(BasicBullet, 800, .25F);
+            WeaponDic.Add(wep.Name, wep);
             Player.CurrentWeapon = wep;
             enemy.CurrentWeapon = wep;
+
+            
+            
         }
 
         /// <summary>
@@ -117,10 +133,7 @@ namespace SpriteTest
         {
             // Get the state of the controller
             CurrentGamepadState = GamePad.GetState(PlayerIndex.One, GamePadDeadZone.Circular);
-            if (CurrentGamepadState.IsConnected)
-            {
-                int nig = 3;
-            }
+            
             CurrentMouseState = Mouse.GetState();
             if (CurrentGamepadState.Buttons.Back == ButtonState.Pressed)
                 this.Exit();
@@ -176,6 +189,16 @@ namespace SpriteTest
         void SimulateEntity(Entity a, Entity b)
         {
 
+        }
+
+        public void AddToNonSimulated(Entity ent)
+        {
+            NonSimulated.Add(ent);
+        }
+
+        public void AddToSimulated(Mobile ent)
+        {
+            Simulated.Add(ent);
         }
 
         Vector2 Projection(Vector2 a, Vector2 b)
@@ -301,7 +324,11 @@ namespace SpriteTest
                 }
 
                 if (ent.IsDestroyed)
+                {
                     toRemove.Add(ent);
+                    if (ent.SpawnOnDestroy())
+                        ent.DoSpawnOnDestroy();
+                }
                 
             }
             foreach (Mobile ent in toRemove)
@@ -313,9 +340,22 @@ namespace SpriteTest
 
         void Simulate(GameTime gameTime)
         {
-            
-            // For each simulated entity, calculate the wanted position then do collision detection as well as draw
             double deltaT = gameTime.ElapsedGameTime.TotalSeconds;           // We'll use seconds for the sake of simplicity
+            List<Entity> toRemove = new List<Entity>();
+            // For non-simulated entities, just move them, no collision detection needed
+            foreach (Entity ent in NonSimulated)
+            {
+                ent.Update(deltaT);
+                if (ent.Remove())
+                    toRemove.Add(ent);
+            }
+
+            foreach (Entity ent in toRemove)
+            {
+                NonSimulated.Remove(ent);
+            }
+            // For each simulated entity, calculate the wanted position then do collision detection as well as draw
+            
             SimulateCollision(deltaT);
         }
 
@@ -355,6 +395,12 @@ namespace SpriteTest
             // TODO: Add your drawing code here
             // Draw the sprite.
             spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend);
+            foreach (Entity ent in NonSimulated)
+            {
+                Vector2 screenPos = WorldToScreen(ent.GetCenterPosition());
+                ent.Draw(spriteBatch, screenPos, Scale);
+            }
+
             foreach (Mobile ent in Simulated) {                
                 Vector2 screenPos = WorldToScreen(ent.GetCenterPosition());
                 ent.Draw(spriteBatch, screenPos, Scale);

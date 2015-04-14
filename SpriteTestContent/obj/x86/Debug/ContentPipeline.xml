@@ -17,7 +17,25 @@
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
       <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Debug\Content\Tracer.xnb</Output>
-      <Time>2015-03-06T22:18:50.2193539-05:00</Time>
+      <Time>2015-04-05T22:34:02.6881443-04:00</Time>
+    </Item>
+    <Item>
+      <Source>Exp_type_A.png</Source>
+      <Name>Exp_type_A</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Debug\Content\Exp_type_A.xnb</Output>
+      <Time>2015-04-06T14:36:42.4200699-04:00</Time>
+    </Item>
+    <Item>
+      <Source>Exp_type_AL.png</Source>
+      <Name>Exp_type_AL</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Debug\Content\Exp_type_AL.xnb</Output>
+      <Time>2015-04-06T22:46:00.8376278-04:00</Time>
     </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>

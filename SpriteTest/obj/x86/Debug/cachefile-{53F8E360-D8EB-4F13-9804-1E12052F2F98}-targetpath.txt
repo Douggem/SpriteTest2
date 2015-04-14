@@ -1,2 +1,4 @@
 Content\Redbig.xnb
 Content\Tracer.xnb
+Content\Exp_type_A.xnb
+Content\Exp_type_AL.xnb
