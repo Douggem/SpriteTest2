@@ -73,6 +73,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AnimatedTexture.cs" />
+    <Compile Include="EntityAI.cs" />
     <Compile Include="GameEntities.cs" />
     <Compile Include="GameEntityInfos.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

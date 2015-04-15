@@ -207,7 +207,7 @@ namespace SpriteTest
             { get; set; }                       // So with 1, if you hit something at 100km/h you will bounce off at 100km/h in the opposite direction
         protected Vector2 Velocity;             // Current velocity
         protected Vector2 Acceleration;         // Current acceleration, will be applied to velocity every tick
-        private float _rotation;
+        private float _rotation;        
         public float Rotation                   // In radians, use setter so we can constrain it between 0 and 2pi
         {
             get
@@ -291,6 +291,15 @@ namespace SpriteTest
             // This should not be called by default
             return;
         }
+
+        public virtual void RotateToVector(Vector2 dir)
+        {
+            dir.Normalize();
+            float rotationWanted = (float)Math.Atan2(dir.Y, dir.X) - (float)(Math.PI / 2F);
+            if (rotationWanted < 0)
+                rotationWanted += (float)Math.PI * 2;
+            Rotation = rotationWanted;
+        }
                 
         public Vector2 GetPosition() { return Position; }
         public Vector2 GetCenterPosition()
@@ -344,10 +353,16 @@ namespace SpriteTest
             
         }
 
+        public virtual void DoLogic(double deltaT) 
+        {
+            
+        }
+
         public override void Update(double deltaT)
         {
             base.Update(deltaT);
             AnimTexture.UpdateFrame((float)deltaT);
+            DoLogic(deltaT);
         }
 
         
@@ -377,6 +392,7 @@ namespace SpriteTest
         public bool IsDestroyed 
             { get; set; }
         public float Speed;
+        public EntityAI AIRoutine;
 
         // Animation for destruction
         public AnimatedTexture DestructionAnimation
@@ -401,6 +417,7 @@ namespace SpriteTest
             ThrustAcceleration = 2000;
             VelocityWanted = new Vector2(0, 0);            
             BoundingBox = new Rectangle(model.Bounds.X, model.Bounds.Y, model.Bounds.Width, model.Bounds.Height);
+            AIRoutine = new EntityAI(this);
         }
 
         public Mobile(MobileInfo info, Vector2 pos, float rot)
@@ -422,16 +439,18 @@ namespace SpriteTest
             ThrustAcceleration = info.ThrustAcceleration;
             VelocityWanted = new Vector2(0, 0);
             BoundingBox = new Rectangle(Model.Bounds.X, Model.Bounds.Y, Model.Bounds.Width, Model.Bounds.Height);
-        }
+            AIRoutine = new EntityAI(this);
+        }        
 
-        
-
-        public override void Update(double deltaT) 
+        public override void Update(double deltaT)         
         {
+            base.Update(deltaT);
             SpeedUpToWanted(deltaT);
+            AIRoutine.DoLogic(deltaT);
         }
 
-        public virtual void OnCollide(Mobile collidedWith) {
+        public virtual void OnCollide(Mobile collidedWith) 
+        {
 
         }
 
@@ -496,6 +515,15 @@ namespace SpriteTest
                 float ratio = MaxSpeed / speed;
                 Velocity *= ratio;
             }
+        }
+
+        public override void RotateToVector(Vector2 dir)
+        {
+            dir.Normalize();
+            float rotationWanted = (float)Math.Atan2(dir.Y, dir.X) - (float)(Math.PI / 2F);
+            if (rotationWanted < 0)
+                rotationWanted += (float)Math.PI * 2;
+            RotationWanted = rotationWanted;
         }
 
         /*
@@ -626,7 +654,7 @@ namespace SpriteTest
      * */
     public class Vessel : Mobile
     {        
-        float RotationSpeed;            // In rads/s
+        public float RotationSpeed;            // In rads/s
         float Armor;                    // Will dampen damage to the hull
         public Weapon CurrentWeapon
         { get; set; }
@@ -643,6 +671,7 @@ namespace SpriteTest
 
         public override void Update(double deltaT) 
         {
+            base.Update(deltaT);
             RotateToWanted(deltaT);
             SpeedUpToWanted(deltaT);
             if (CurrentWeapon.ShotTimer > 0)

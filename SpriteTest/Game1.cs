@@ -110,9 +110,11 @@ namespace SpriteTest
             WeaponDic.Add(wep.Name, wep);
             Player.CurrentWeapon = wep;
             enemy.CurrentWeapon = wep;
-
-            
-            
+            enemy.AIRoutine = new Rammer(enemy, 0.25);
+            enemy.MaxSpeed = 2000;
+            enemy.ThrustAcceleration = 400;
+            enemy.RotationSpeed = 0.5F * (float)Math.PI;
+            enemy.Elasticity = 0.1F;
         }
 
         /// <summary>
@@ -143,11 +145,7 @@ namespace SpriteTest
             bool fireButton = CurrentGamepadState.IsButtonDown(Buttons.RightShoulder);
             if (!(rightStick.X == 0 && rightStick.Y == 0) )
             {
-                rightStick.Normalize();
-                float rotationWanted = (float)Math.Atan2(rightStick.Y, rightStick.X) - (float)(Math.PI / 2F);
-                if (rotationWanted < 0)
-                    rotationWanted += (float)Math.PI * 2;
-                Player.RotationWanted = rotationWanted;
+                Player.RotateToVector(rightStick);
             }
             if (!(leftStick.X == 0 && leftStick.Y == 0))
             {
@@ -415,6 +413,11 @@ namespace SpriteTest
             spriteBatch.End();
 
             base.Draw(gameTime);
+        }
+
+        public Vessel GetPlayerVessel()
+        {
+            return Player;
         }
     }
 }

@@ -1,6 +1,5 @@
 C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Debug\SpriteTest.exe
 C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Debug\SpriteTest.pdb
-C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\obj\x86\Debug\SpriteTest.csprojResolveAssemblyReference.cache
 C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\obj\x86\Debug\Microsoft.Xna.Framework.RuntimeProfile.txt
 C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\obj\x86\Debug\SpriteTest.exe
 C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\obj\x86\Debug\SpriteTest.pdb
