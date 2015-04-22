@@ -25,6 +25,7 @@ namespace SpriteTest
         KeyboardState CurrentKeyboardState;
         List<Entity> NonSimulated;                      // We shouldn't need random access to our game entities, so a list will suffice and be more efficient than an array.
         List<Mobile> Simulated;
+        List<Mobile> ToAddSimulated;
         Vessel Player;
         Rectangle Boundaries;                       // Game boundaries, top left should typically be 0,0
         float Scale = 1.0F;
@@ -49,7 +50,7 @@ namespace SpriteTest
 
             Simulated = new List<Mobile>();
             NonSimulated = new List<Entity>();
-
+            ToAddSimulated = new List<Mobile>();
             RNG = new Random(Environment.TickCount);
         }
 
@@ -97,6 +98,7 @@ namespace SpriteTest
             player.SetVelocity(50, 50);
             Simulated.Add(player);
             Player = player;
+            
             Vessel enemy = new Vessel(myTexture, Entity.EntitySide.ENEMY, new Vector2(200, 200), 0, 5, 100);
             enemy.DampenInnertia = false;
             enemy.DestructionAnimation = explosionTexture;
@@ -107,10 +109,11 @@ namespace SpriteTest
             BasicBullet = new ProjectileInfo("BasicBullet", TracerTexture, 0, 100, 6);
             ProjectileDic.Add(BasicBullet.Name, BasicBullet);
             Weapon wep = new Weapon(BasicBullet, 800, .25F);
+            Weapon enemyWep = new Weapon(BasicBullet, 800, 1);
             WeaponDic.Add(wep.Name, wep);
             Player.CurrentWeapon = wep;
-            enemy.CurrentWeapon = wep;
-            enemy.AIRoutine = new Rammer(enemy, 0.25);
+            enemy.CurrentWeapon = enemyWep;
+            enemy.AIRoutine = new DumbShooter(enemy, .1);
             enemy.MaxSpeed = 2000;
             enemy.ThrustAcceleration = 400;
             enemy.RotationSpeed = 0.5F * (float)Math.PI;
@@ -145,7 +148,7 @@ namespace SpriteTest
             bool fireButton = CurrentGamepadState.IsButtonDown(Buttons.RightShoulder);
             if (!(rightStick.X == 0 && rightStick.Y == 0) )
             {
-                Player.RotateToVector(rightStick);
+                Player.RotateToScreenVector(rightStick);
             }
             if (!(leftStick.X == 0 && leftStick.Y == 0))
             {
@@ -175,6 +178,14 @@ namespace SpriteTest
                 Simulated.Add(bullet);*/
             }
 
+            // Add queued entities to the simulation
+            foreach (Mobile ent in ToAddSimulated)
+            {
+                Simulated.Add(ent);
+            }
+
+            ToAddSimulated.Clear();
+
             Simulate(gameTime);
             base.Update(gameTime);
         }
@@ -196,7 +207,7 @@ namespace SpriteTest
 
         public void AddToSimulated(Mobile ent)
         {
-            Simulated.Add(ent);
+            ToAddSimulated.Add(ent);
         }
 
         Vector2 Projection(Vector2 a, Vector2 b)

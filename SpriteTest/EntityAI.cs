@@ -45,6 +45,46 @@ namespace SpriteTest
         }
     }
 
+    public class DumbShooter : EntityAI
+    {
+        protected Mobile Target;          // Typically use the player      
+
+        public DumbShooter(Mobile parent, double logicFrequency)
+            : base(parent, logicFrequency)
+        {
+            
+        }
+
+        // We want to try to ram the target
+        // We will add velocity on a vector toward the target, without correcting for our current heading
+        // This will make us miss an actively moving target, but hit a stationary one
+        // It will give us a 'swarm' effect
+        public override void PerformLogic(double deltaT)
+        {
+            if (Target != null && !Target.IsDestroyed)
+            {
+                // Set velocity wanted as the vector to the target
+                Vector2 parentToTarget = Target.GetCenterPosition() - Parent.GetCenterPosition();
+                Vector2 rot = new Vector2(parentToTarget.Y, -parentToTarget.X);
+                parentToTarget.Normalize();
+                Parent.RotateToWorldVector(rot);
+                if (Parent.Type == Entity.EntityType.VESSEL)
+                {
+                    Vessel v = (Vessel)Parent;
+                    if (v.CanFire())
+                    {
+                        Program.GGame.AddToSimulated(v.Fire());
+                    }
+                }
+                
+            }
+            else
+            {
+                Target = Program.GGame.GetPlayerVessel();
+            }
+        }
+    }
+
     public class Rammer : EntityAI
     {
         protected Mobile Target;          // Typically use the player      
@@ -66,7 +106,8 @@ namespace SpriteTest
                 // Set velocity wanted as the vector to the target
                 Vector2 parentToTarget = Target.GetCenterPosition() - Parent.GetCenterPosition();
                 parentToTarget.Normalize();
-                //Parent.RotateToVector(parentToTarget);
+                Vector2 rot = new Vector2(parentToTarget.Y, -parentToTarget.X);
+                Parent.RotateToWorldVector(rot);
                 parentToTarget *= Parent.MaxSpeed;
                 Parent.SetVelocityWanted(parentToTarget);
             }

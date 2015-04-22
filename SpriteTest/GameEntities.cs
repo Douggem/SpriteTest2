@@ -31,6 +31,7 @@ namespace SpriteTest
         // Rotates a vertex around the origin with 'angle' radians
         public static Vector2 RotateVertexAroundOrigin(Vector2 p, float angle)
         {
+            return RotateVertexAroundPoint(p, angle, new Vector2(0, 0));
             float xnew = (float)(p.X * Math.Cos(angle) - p.Y * Math.Sin(angle));
             float ynew = (float)(p.X * Math.Sin(angle) + p.Y * Math.Cos(angle));
             Vector2 result = new Vector2(xnew, ynew);
@@ -154,7 +155,7 @@ namespace SpriteTest
             target.CenterX -= origin.X;
             target.CenterY -= origin.Y;
 
-            // Rotate so that box 2 is axis aligned
+            // Rotate so that box 1 is axis aligned
             BoxWithPoints thisPoints = thisCopy.GetPoints();
             BoxWithPoints targetPoints = target.GetPoints();
             float angle = -target.Theta;
@@ -292,7 +293,12 @@ namespace SpriteTest
             return;
         }
 
-        public virtual void RotateToVector(Vector2 dir)
+        public virtual void RotateToWorldVector(Vector2 dir)
+        {
+
+        }
+
+        public virtual void RotateToScreenVector(Vector2 dir)
         {
             dir.Normalize();
             float rotationWanted = (float)Math.Atan2(dir.Y, dir.X) - (float)(Math.PI / 2F);
@@ -517,10 +523,25 @@ namespace SpriteTest
             }
         }
 
-        public override void RotateToVector(Vector2 dir)
+        // Used for vectors calculated in world space i.e. from ship to ship
+        public override void RotateToWorldVector(Vector2 dir)
+        {
+            // Rotation is in screen space (because I'm stupid sometimes) so we need to translate from screen to world
+            // Basically, we need to move the angle to the previous quadrant, i.e. subtract 90 degrees or pi/2
+            dir.Normalize();
+            float rotationWanted = (float)Math.Atan2(dir.X, dir.Y) + (float)(Math.PI / 2F);
+            //rotationWanted += (float)Math.PI / 2;
+            if (rotationWanted < 0)
+                rotationWanted += (float)Math.PI * 2;
+            RotationWanted = rotationWanted;
+        }
+
+        // Used for joysticks
+        public override void RotateToScreenVector(Vector2 dir)
         {
             dir.Normalize();
             float rotationWanted = (float)Math.Atan2(dir.Y, dir.X) - (float)(Math.PI / 2F);
+            //rotationWanted += (float)Math.PI / 2;
             if (rotationWanted < 0)
                 rotationWanted += (float)Math.PI * 2;
             RotationWanted = rotationWanted;
@@ -658,6 +679,7 @@ namespace SpriteTest
         float Armor;                    // Will dampen damage to the hull
         public Weapon CurrentWeapon
         { get; set; }
+        public float ShotTimer;                            // Set to CurrentWeapon.ShotDelay when shot, don't fire until reaches 0
 
         public Vessel(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass, float armor = 0)
             : base(model, side, pos, rot, hull, mass)
@@ -674,9 +696,9 @@ namespace SpriteTest
             base.Update(deltaT);
             RotateToWanted(deltaT);
             SpeedUpToWanted(deltaT);
-            if (CurrentWeapon.ShotTimer > 0)
-                CurrentWeapon.ShotTimer -= (float)deltaT;
-            else CurrentWeapon.ShotTimer = 0;
+            if (ShotTimer > 0)
+                ShotTimer -= (float)deltaT;
+            else ShotTimer = 0;
         }
 
         /*
@@ -714,7 +736,7 @@ namespace SpriteTest
 
         public virtual bool CanFire()
         {
-            if (CurrentWeapon.ShotTimer <= 0)
+            if (ShotTimer <= 0)
                 return true;
             return false;
         }
@@ -724,7 +746,7 @@ namespace SpriteTest
             float angle = Rotation + (float)Math.PI / 2;
             Projectile bullet = new Projectile(CurrentWeapon.Munition, GetCenterPosition(), angle);
             Vector2 angleVector = new Vector2((float)Math.Cos(angle), -(float)Math.Sin(angle));
-            CurrentWeapon.ShotTimer = CurrentWeapon.ShotDelay;
+            ShotTimer = CurrentWeapon.ShotDelay;
             bullet.SetVelocity(angleVector * 2 * CurrentWeapon.InitSpeed + GetVelocity());
             bullet.SetVelocityWanted(angleVector * 0);
             bullet.Side = Side;
@@ -748,7 +770,7 @@ namespace SpriteTest
         public ProjectileInfo Munition;
         public float InitSpeed;                            // Velocity (relative to vessel in direction of heading) the projectile will be launched at
         public float ShotDelay;                            // Time between shots, i.e. rate of fire
-        public float ShotTimer;                            // Set to ShotDelay when shot, don't fire until reaches 0
+        
 
         public Weapon(ProjectileInfo munition, float speed, float delay)
         {
@@ -756,7 +778,7 @@ namespace SpriteTest
             Munition = munition;
             InitSpeed = speed;
             ShotDelay = delay;
-            ShotTimer = 0;
+            
         }
     }
 }

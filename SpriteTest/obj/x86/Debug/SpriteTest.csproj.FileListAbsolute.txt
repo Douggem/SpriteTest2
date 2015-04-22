@@ -7,3 +7,4 @@ C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\Sprite
 C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Debug\Content\Tracer.xnb
 C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Debug\Content\Exp_type_A.xnb
 C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Debug\Content\Exp_type_AL.xnb
+C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\obj\x86\Debug\SpriteTest.csprojResolveAssemblyReference.cache
