@@ -54,21 +54,23 @@ namespace SpriteTest
     public class MobileInfo : EntityInfo
     {
         public float MaxSpeed                      // If we are above max speed, we will DAMPEN down to max speed, so it's a 'soft' max not a 'hard' max        
-        { get; set; }
+            { get; set; }
         public float ThrustAcceleration            // Not only the "gas" if the entity wants to move, but also the "brake" in the event of stopping or inertial dampening.        
-        { get; set; }
+            { get; set; }
         public float Hull                                 // i.e. HP, health, life, etc.        
-        { get; set; }
+            { get; set; }
         public float Mass                                 // Used in collision calculations to calculate impulse
-        { get; set; }
+            { get; set; }
         public float MassInv                              // Pre-calculated to avoid divide by zero        
-        { get; set; }
+            { get; set; }
         public bool CanCollide                     // If false, will not collide with anything        
-        { get; set; }
+            { get; set; }
         public bool CollideWithOwnSide             // If false, will not collide with entities of same side        
-        { get; set; }
+            { get; set; }
         public bool DampenInnertia                 // If true, the object will automatically brake itself if not accelerating.
-        { get; set; }
+            { get; set; }
+        public AnimatedTexture DestructionAnimation // Animation for destruction
+            { get; set; }
 
         public MobileInfo(string name, Texture2D model, float hull, float mass)
             : base(name, model)

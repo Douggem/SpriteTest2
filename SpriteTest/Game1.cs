@@ -29,6 +29,7 @@ namespace SpriteTest
         Vessel Player;
         Rectangle Boundaries;                       // Game boundaries, top left should typically be 0,0
         float Scale = 1.0F;
+        Vector2 ScreenOffset = new Vector2(0, 0);
         Texture2D BoundingBoxTexture;
         Texture2D TracerTexture;
         Random RNG;
@@ -88,25 +89,34 @@ namespace SpriteTest
             myTexture = Content.Load<Texture2D>("Redbig");
             TracerTexture = Content.Load<Texture2D>("Tracer");
             // TODO: use this.Content to load your game content here
-            // Load the explosion animation
-            AnimatedTexture explosionTexture = new AnimatedTexture(Vector2.Zero, 0, 3, 0.5f, false);
+            
+            // Load the large ship explosion animation
+            AnimatedTexture largeExplosionTexture = new AnimatedTexture(Vector2.Zero, 0, 3, 0.5f, false);
             TargetElapsedTime = TimeSpan.FromSeconds(1.0 / 60.0);
-            explosionTexture.Load(Content, "Exp_type_AL", 32, 60, 2);
-            ExplosionInfo explosionInfo = new ExplosionInfo("Exp_1", explosionTexture);
+            largeExplosionTexture.Load(Content, "Exp_type_AL", 32, 60, 2);
+            ExplosionInfo explosionInfo = new ExplosionInfo("Exp_1", largeExplosionTexture);
+
+            // Load the tiny explosion animation (i.e. for rockets hitting)
+            AnimatedTexture tinyExplosionTexture = new AnimatedTexture(Vector2.Zero, 0, 0.5F, 0.5f, false);
+            TargetElapsedTime = TimeSpan.FromSeconds(1.0 / 60.0);
+            tinyExplosionTexture.Load(Content, "Exp_type_AL", 32, 60, 2);
+            ExplosionInfo tinyExplosionInfo = new ExplosionInfo("Exp_1", tinyExplosionTexture);
 
             Vessel player = new Vessel(myTexture, Entity.EntitySide.PLAYER, new Vector2(600, 600), 0, 100, 100);
             player.SetVelocity(50, 50);
             Simulated.Add(player);
             Player = player;
+            Player.MaxSpeed = 600;
             
-            Vessel enemy = new Vessel(myTexture, Entity.EntitySide.ENEMY, new Vector2(200, 200), 0, 5, 100);
+            Vessel enemy = new Vessel(myTexture, Entity.EntitySide.ENEMY, new Vector2(200, 200), 0, 60, 100);
             enemy.DampenInnertia = false;
-            enemy.DestructionAnimation = explosionTexture;
+            enemy.DestructionAnimation = largeExplosionTexture;
             Simulated.Add(enemy);
             // For hitbox drawing            
             BoundingBoxTexture = new Texture2D(GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
             BoundingBoxTexture.SetData(new[] { Color.White }); // so that we can draw whatever color we want on top of it
             BasicBullet = new ProjectileInfo("BasicBullet", TracerTexture, 0, 100, 6);
+            BasicBullet.DestructionAnimation = tinyExplosionTexture;
             ProjectileDic.Add(BasicBullet.Name, BasicBullet);
             Weapon wep = new Weapon(BasicBullet, 800, .25F);
             Weapon enemyWep = new Weapon(BasicBullet, 800, 1);
@@ -127,7 +137,7 @@ namespace SpriteTest
         protected override void UnloadContent()
         {
             // TODO: Unload any non ContentManager content here
-        }
+        }///////////////////////////////////////////
 
         /// <summary>
         /// Allows the game to run logic such as updating the world,
@@ -146,6 +156,9 @@ namespace SpriteTest
             Vector2 leftStick = CurrentGamepadState.ThumbSticks.Left;
             Vector2 rightStick = CurrentGamepadState.ThumbSticks.Right;
             bool fireButton = CurrentGamepadState.IsButtonDown(Buttons.RightShoulder);
+            bool zoomOut = CurrentGamepadState.IsButtonDown(Buttons.RightTrigger);
+            bool zoomIn = CurrentGamepadState.IsButtonDown(Buttons.LeftTrigger);
+
             if (!(rightStick.X == 0 && rightStick.Y == 0) )
             {
                 Player.RotateToScreenVector(rightStick);
@@ -161,6 +174,11 @@ namespace SpriteTest
             {
                 Player.SetVelocityWanted(0, 0);
             }
+
+            if (zoomIn)
+                Scale /= 0.99F;
+            if (zoomOut)
+                Scale *= 0.99F;
 
             if (fireButton)
             {
@@ -190,9 +208,15 @@ namespace SpriteTest
             base.Update(gameTime);
         }
 
-        Vector2 WorldToScreen(Vector2 pos)
+        public Vector2 WorldToScreen(Vector2 pos)
         {
-            return pos;
+            // ScreenOffset is in screenspace, pos is in worldspace.  Translate pos with scale to put in ScreenSpace
+            // then apply ScreenOffset
+            // Do scale transform
+            Vector2 translatedPos = pos * Scale;
+            // Do offset transform
+            translatedPos -= ScreenOffset;
+            return translatedPos;
         }
 
         void SimulateEntity(Entity a, Entity b)
@@ -368,8 +392,28 @@ namespace SpriteTest
             SimulateCollision(deltaT);
         }
 
+        void DrawRectangle(SpriteBatch sb, Rectangle rect)
+        {
+            // DrawLine needs a start and end vector, so do this
+            int left = rect.Center.X - rect.Width / 2;
+            int right = rect.Center.X + rect.Width / 2;
+            int top = rect.Center.Y + rect.Height / 2;
+            int bottom = rect.Center.Y - rect.Height / 2;
+
+            Vector2 topLeft = new Vector2(left, top);
+            Vector2 topRight = new Vector2(right, top);
+            Vector2 bottomLeft = new Vector2(left, bottom);
+            Vector2 bottomRight = new Vector2(right, bottom);
+            DrawLine(sb, topLeft, topRight);
+            DrawLine(sb, topLeft, bottomLeft);
+            DrawLine(sb, bottomLeft, bottomRight);
+            DrawLine(sb, topRight, bottomRight);
+        }
+
         void DrawLine(SpriteBatch sb, Vector2 start, Vector2 end)
         {
+            start = WorldToScreen(start);
+            end = WorldToScreen(end);
             Vector2 edge = end - start;
             // calculate angle to rotate line
             float angle =
@@ -398,7 +442,14 @@ namespace SpriteTest
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            // Center the screen on our player
+            if (Player != null)
+            {
+                Vector2 playerScreenPos = Player.GetCenterPosition();
+                ScreenOffset.X = playerScreenPos.X * Scale - (Boundaries.Width / 2);
+                ScreenOffset.Y = playerScreenPos.Y * Scale - (Boundaries.Height / 2);
+            }
+            GraphicsDevice.Clear(Color.Black);
             // For debugging, draw hit boxes
             
             // TODO: Add your drawing code here
@@ -421,7 +472,12 @@ namespace SpriteTest
                 DrawLine(spriteBatch, hitBox.P3, hitBox.P4);
                 DrawLine(spriteBatch, hitBox.P1, hitBox.P4);
             }
+            // Draw the scene boundaries
+            DrawRectangle(spriteBatch, Boundaries);
             spriteBatch.End();
+
+            
+            
 
             base.Draw(gameTime);
         }

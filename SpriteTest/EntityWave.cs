@@ -18,6 +18,11 @@ namespace SpriteTest
         public float EntryDirection;            // In radians in screen space
         public float EntryDirectionAngleRand;   // In radians, give a little randomness to entry direction
 
+        public  class WaveEntry 
+        {
+            //virtual void 
+        }
+
         public VesselEntry(VesselInfo vinfo, float direction, float randomness = 0.10F)
         {
             VInfo = vinfo;

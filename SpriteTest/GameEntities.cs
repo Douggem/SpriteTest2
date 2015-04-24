@@ -53,6 +53,14 @@ namespace SpriteTest
         public Vector2 P3;
         public Vector2 P4;
 
+        public BoxWithPoints(BoxWithPoints toCopy)
+        {
+            P1 = toCopy.P1;
+            P2 = toCopy.P2;
+            P3 = toCopy.P3;
+            P4 = toCopy.P4;
+        }
+
         // Until we add sanity checks, P1 should be upper left, P2 lower left, P3 lower right, P4 upper right corner
         public BoxWithPoints(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4)
         {
@@ -103,6 +111,16 @@ namespace SpriteTest
         float Width;
         float Height;
         float Theta;
+
+       /* public BoundingBoxNonAligned(BoundingBoxNonAligned toCopy)
+        {
+            CenterX = toCopy.CenterX;
+            CenterY = toCopy.CenterY;
+            Width = toCopy.Width;
+            Height = toCopy.Height;
+            Theta = toCopy.Theta;
+        }*/
+
         public BoundingBoxNonAligned(float centerX, float centerY, float width, float height, float theta) {
             CenterX = centerX;
             CenterY = centerY;
@@ -225,7 +243,20 @@ namespace SpriteTest
             }
         }
         protected Vector2 Origin;
-        
+
+        public Entity(Entity toCopy)
+        {
+            Side = toCopy.Side;
+            Type = toCopy.Type;
+            Model = toCopy.Model;
+            Position = new Vector2(toCopy.Position.X, toCopy.Position.Y);
+            Elasticity = toCopy.Elasticity;
+            Velocity = new Vector2(toCopy.Velocity.X, toCopy.Velocity.Y);
+            Acceleration = new Vector2(toCopy.Acceleration.X, toCopy.Acceleration.Y);
+            Rotation = toCopy.Rotation;
+            Origin = toCopy.Origin;
+        }
+
 
         public Entity(Texture2D model, EntitySide side, Vector2 pos, float rot) 
         {
@@ -331,11 +362,20 @@ namespace SpriteTest
     public class Explosion : Entity
     {
         AnimatedTexture AnimTexture;
+        float timeAlive;
+
+        public Explosion(Explosion toCopy)
+            : base(toCopy)
+        {
+            AnimTexture = toCopy.AnimTexture;
+            timeAlive = toCopy.timeAlive;
+        }
 
         public Explosion(AnimatedTexture anim, EntitySide side, Vector2 pos, float rot )
             : base(null, side, pos, rot)
         {
             AnimTexture = anim;
+            timeAlive = 0;
         }
 
         public Explosion(ExplosionInfo info, Vector2 pos, float rot)
@@ -343,11 +383,12 @@ namespace SpriteTest
         {
             AnimTexture = info.AnimTexture;
             Origin = new Vector2(AnimTexture.FrameWidth, AnimTexture.FrameHeight);
+            timeAlive = 0;
         }
 
         public override bool Remove()
         {
-            return AnimTexture.Complete();
+            return AnimTexture.Complete(timeAlive);
         }
 
         public override void Draw(SpriteBatch spriteBatch, Vector2 screenPos, float scale) 
@@ -355,8 +396,7 @@ namespace SpriteTest
             // We want things drawn at the center of their position, not the top left
             
             AnimTexture.Rotation = Rotation;
-            AnimTexture.DrawFrame(spriteBatch, Position, scale);
-            
+            AnimTexture.DrawFrame(spriteBatch, screenPos, timeAlive, scale);            
         }
 
         public virtual void DoLogic(double deltaT) 
@@ -366,9 +406,10 @@ namespace SpriteTest
 
         public override void Update(double deltaT)
         {
-            base.Update(deltaT);
-            AnimTexture.UpdateFrame((float)deltaT);
+            timeAlive += (float)deltaT;
+            base.Update(deltaT);            
             DoLogic(deltaT);
+            
         }
 
         
@@ -403,6 +444,20 @@ namespace SpriteTest
         // Animation for destruction
         public AnimatedTexture DestructionAnimation
             { get; set; }
+
+        public Mobile(Mobile toCopy)
+            : base(toCopy)
+        {
+            VelocityWanted = new Vector2(toCopy.VelocityWanted.X, toCopy.VelocityWanted.Y);
+            PositionWanted = new Vector2(toCopy.PositionWanted.X, toCopy.PositionWanted.Y);
+            RotationWanted = toCopy.RotationWanted;
+            MaxSpeed = toCopy.MaxSpeed;
+            ThrustAcceleration = toCopy.ThrustAcceleration;
+            Hull = toCopy.Hull;
+            Mass = toCopy.Mass;
+            MassInv = toCopy.MassInv;
+            BoundingBox = new Rectangle(BoundingBox.X, BoundingBox.Y, BoundingBox.Width, BoundingBox.Height);
+        }
 
         public Mobile(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass) 
             : base(model, side, pos, rot)
@@ -446,6 +501,7 @@ namespace SpriteTest
             VelocityWanted = new Vector2(0, 0);
             BoundingBox = new Rectangle(Model.Bounds.X, Model.Bounds.Y, Model.Bounds.Width, Model.Bounds.Height);
             AIRoutine = new EntityAI(this);
+            DestructionAnimation = info.DestructionAnimation;
         }        
 
         public override void Update(double deltaT)         
@@ -622,6 +678,7 @@ namespace SpriteTest
     {
         public float BaseDamage               // Base damage the projectile does to a target on collision
             { get; set; }
+        public float ExplosionDamage;
         public float HullDamageCoef           // Coefficient if it hits only hull
             { get; set; }
         public float ShieldDamageCoef         // Coefficient if it hits shields
@@ -642,7 +699,7 @@ namespace SpriteTest
             DampenInnertia = false;
             TimeToLive = 6;
             InitTime = Environment.TickCount;
-            DeflectionChance = 0.25F;
+            DeflectionChance = 0.0F;
         }
 
         public Projectile(ProjectileInfo info, Vector2 pos, float rot)
@@ -652,7 +709,7 @@ namespace SpriteTest
             DampenInnertia = false;
             TimeToLive = info.TimeToLive;
             InitTime = Environment.TickCount;
-            DeflectionChance = 0.25F;
+            DeflectionChance = 0;
             BaseDamage = info.BaseDamage;
         }
 
@@ -665,8 +722,12 @@ namespace SpriteTest
             {
                 IsDestroyed = true;
             }
-            collidedWith.ApplyDamage(BaseDamage);
+            else
+            {
+                // Deflection should have already occurred, align our sprite with the new direction
 
+            }
+            collidedWith.ApplyDamage(BaseDamage);
         }
     }
 

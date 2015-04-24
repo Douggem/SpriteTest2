@@ -25,6 +25,7 @@ namespace AnimatedSprite
         private int Frame;
         private float TotalElapsed;
         private bool Paused;
+        
         public bool Looping;
         public float Rotation, Scale, Depth;
         public Vector2 Origin;
@@ -79,9 +80,27 @@ namespace AnimatedSprite
                 TotalElapsed -= TimePerFrame;
             }
         }
-        public bool Complete()
+
+        public int GetFrameNumber(float totalElapsed)
         {
-            return (!Looping && Frame >= framecount);
+            int frameNum = (int)(totalElapsed / TimePerFrame);                
+            // Keep the Frame between 0 and the total frames, minus one.
+            if (!Looping && Frame >= framecount)
+            {
+                Paused = true;
+                return framecount;
+            }
+            return frameNum;
+        }
+
+        public bool Complete(float totalElapsed)
+        {
+            return (!Looping && GetFrameNumber(totalElapsed) >= framecount);
+        }
+
+        public void DrawFrame(SpriteBatch batch, Vector2 screenPos, float totalTimeAlive, float scale = 1)
+        {
+            DrawFrame(batch, GetFrameNumber(totalTimeAlive), screenPos, 1);
         }
 
         // class AnimatedTexture
@@ -100,8 +119,6 @@ namespace AnimatedSprite
                 FrameWidth, FrameHeight);
             batch.Draw(myTexture, screenPos, sourcerect, Color.White,
                 Rotation, Origin, Scale * scale, SpriteEffects.None, Depth);
-            
-
         }
 
         public bool IsPaused
