@@ -474,8 +474,10 @@ namespace SpriteTest
             InitializeEnemies();
             InitializeWaves();
             InitializeDialogTemplates();
-            Vessel player = new Vessel(MedBlue, Entity.EntitySide.PLAYER, new Vector2(600, 600), 0, 100, 100);
+            Vessel player = new Vessel(MedBlue, Entity.EntitySide.PLAYER, new Vector2(600, 2000), (float)Math.PI * 1.25F, 100, 100);
             player.SetVelocity(50, 50);
+            player.RotationWanted = player.Rotation;
+            
             Simulated.Add(player);
             Player = player;
             Player.MaxSpeed = 600;
@@ -526,19 +528,19 @@ namespace SpriteTest
             
             WaveStack.Enqueue(new WaveStackDialog(RatcliffeDialog, 3000, "We're approaching the source of the signal, Captain."));
             WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 3000, "It's coming from that asteroid sir."));
-            WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 3000, "Thank you chief.  Any ideas on who made it?"));
-            WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 2000, "It's not a technology our systems recognize..."));
-            WaveStack.Enqueue(new WaveStackDialog(RolfeDialog, 3000, "I'm reading incoming warp signatures, sir!"));
+            WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 3000, "Any ideas on who made it?"));
+            WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 2000, "The system can't identify the technology..."));
+            WaveStack.Enqueue(new WaveStackDialog(RolfeDialog, 3000, "Incoming warp signatures, sir!"));
             WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 3000, "The incoming ships match the signature of the signal beacon"));
             WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 2000, "Battlestations!  Red alert!"));
-            WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 3000, "They're coming in hot sir, I their weapons are armed."));
-            WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 2000, "Ratcliffe, get us moving,"));
+            WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 3000, "They're coming in hot sir, their weapons are armed."));
+            WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 2000, "Ratcliffe, get us moving."));
             WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 3000, "I don't want us to be standing still when they get here."));
             WaveStack.Enqueue(new WaveStackDialog(RatcliffeDialog, 1000, "Aye sir!"));
             WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 3000, "Rolfe, ready all weapons and standby to engage..."));
-            WaveStack.Enqueue(new WaveStackDialog(RolfeDialog, 3000, "I know what to do, this isn't my time in combat, Captain"));
+            WaveStack.Enqueue(new WaveStackDialog(RolfeDialog, 3000, "I know what to do, this isn't my first time in combat, Captain"));
             
-            WaveStack.Enqueue(new WaveStackDialog(RatcliffeDialog, 2000, "Ten seconds to contact, Captain!"));// 39
+            WaveStack.Enqueue(new WaveStackDialog(RatcliffeDialog, 2000, "Ten seconds to contact."));// 39
             WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 2000, "Equal power to shields, weapons...")); // 41
             WaveStack.Enqueue(new WaveStackDialog(RatcliffeDialog, 2000, "Six seconds!"));// 43
             WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 2000, "and engines, shields equal distribution on all octants!")); // 45            
@@ -551,7 +553,7 @@ namespace SpriteTest
             WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 3000, "The material in their ships is thousands of years old..."));
             WaveStack.Enqueue(new WaveStackSleep(2000));
             WaveStack.Enqueue(Rammers5);
-            WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 3000, "This doesn't make any sense, it's like they came out of a hibernation?"));
+            WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 3000, "This doesn't make any sense, it's like they came out of hibernation."));
             WaveStack.Enqueue(Rammers5);
             WaveStack.Enqueue(new WaveStackSleep(1000));
             WaveStack.Enqueue(Rammers5);
@@ -641,7 +643,7 @@ namespace SpriteTest
             WaveStack.Enqueue(new WaveStackWaitForEnemiesDestroyed());            
             WaveStack.Enqueue(Rammers5);
             WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 3000, "Nakoma that doesn't make any sense."));
-            WaveStack.Enqueue(new WaveStackSleep(6000));
+            WaveStack.Enqueue(new WaveStackSleep(1000));
             WaveStack.Enqueue(StraferCannons4);
             WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 3000, "I don't know what else to say Captain, they're alive."));            
             WaveStack.Enqueue(new WaveStackSleep(4000));
@@ -1072,7 +1074,7 @@ namespace SpriteTest
                 WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 3000, "The ancestors we've retrieved have an idea."));
                 WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 3000, "They say they're familiar with the aliens' hibernation technology"));
                 WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 3000, "They can put us in stasis and we can awaken back in our own time,"));
-                WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 3000, "after the other us gets sent back in time."));
+                WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 3000, "after the other 'us' gets sent back in time."));
                 WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 3000, "Do you really think that will work?"));
                 WaveStack.Enqueue(new WaveStackDialog(NakomaDialog, 3000, "Do we really have another choice?"));
                 WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 3000, "I suppose not.  Well then, make it so."));
@@ -1087,7 +1089,7 @@ namespace SpriteTest
                 WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 3000, "Did it work?  Are we in the right time?"));
                 WaveStack.Enqueue(new WaveStackDialog(RatcliffeDialog, 3000, "Astrometrics shows us in the correct place and time, sir."));
                 WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 3000, "Well, I'm looking forward to getting home, then."));
-                WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 3000, "Lay in course for earth, Ratcliffe."));
+                WaveStack.Enqueue(new WaveStackDialog(SmithDialog, 3000, "Lay in course for Earth, Ratcliffe."));
                 WaveStack.Enqueue(new WaveStackDialog(RatcliffeDialog, 3000, "Aye sir"));
                 WaveStack.Enqueue(new WaveStackDialog(RolfeDialog, 3000, "I can't wait for my commission.  You think I'll get a carrier?"));
                 WaveStack.Enqueue(new WaveStackFadeOut());
