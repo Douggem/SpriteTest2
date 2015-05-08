@@ -100,7 +100,7 @@ namespace AnimatedSprite
 
         public void DrawFrame(SpriteBatch batch, Vector2 screenPos, float totalTimeAlive, float scale = 1)
         {
-            DrawFrame(batch, GetFrameNumber(totalTimeAlive), screenPos, 1);
+            DrawFrame(batch, GetFrameNumber(totalTimeAlive), screenPos, scale);
         }
 
         // class AnimatedTexture

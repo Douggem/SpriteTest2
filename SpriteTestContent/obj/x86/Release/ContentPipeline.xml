@@ -17,7 +17,280 @@
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
       <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\Tracer.xnb</Output>
-      <Time>2015-03-06T22:18:50.2193539-05:00</Time>
+      <Time>2015-04-05T22:34:02.6881443-04:00</Time>
+    </Item>
+    <Item>
+      <Source>Exp_type_A.png</Source>
+      <Name>Exp_type_A</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\Exp_type_A.xnb</Output>
+      <Time>2015-04-06T14:36:42.4200699-04:00</Time>
+    </Item>
+    <Item>
+      <Source>Exp_type_AL.png</Source>
+      <Name>Exp_type_AL</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\Exp_type_AL.xnb</Output>
+      <Time>2015-04-06T22:46:00.8376278-04:00</Time>
+    </Item>
+    <Item>
+      <Source>rocket.png</Source>
+      <Name>rocket</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\rocket.xnb</Output>
+      <Time>2015-05-04T18:58:13.1451897-04:00</Time>
+    </Item>
+    <Item>
+      <Source>TracerThin.png</Source>
+      <Name>TracerThin</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\TracerThin.xnb</Output>
+      <Time>2015-05-05T16:56:47.2082553-04:00</Time>
+    </Item>
+    <Item>
+      <Source>plasma.png</Source>
+      <Name>plasma</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\plasma.xnb</Output>
+      <Time>2015-05-05T23:43:39.3775515-04:00</Time>
+    </Item>
+    <Item>
+      <Source>BGNeon.jpg</Source>
+      <Name>BGNeon</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\BGNeon.xnb</Output>
+      <Time>2015-05-06T13:11:57.4067393-04:00</Time>
+    </Item>
+    <Item>
+      <Source>medBlue.png</Source>
+      <Name>medBlue</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\medBlue.xnb</Output>
+      <Time>2015-05-06T15:29:39.6324087-04:00</Time>
+    </Item>
+    <Item>
+      <Source>medRed1.png</Source>
+      <Name>medRed1</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\medRed1.xnb</Output>
+      <Time>2015-05-06T15:24:48.809979-04:00</Time>
+    </Item>
+    <Item>
+      <Source>redSmall1.png</Source>
+      <Name>redSmall1</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\redSmall1.xnb</Output>
+      <Time>2015-05-06T20:44:07.8348989-04:00</Time>
+    </Item>
+    <Item>
+      <Source>redSmall2.png</Source>
+      <Name>redSmall2</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\redSmall2.xnb</Output>
+      <Time>2015-05-06T20:42:01.9987015-04:00</Time>
+    </Item>
+    <Item>
+      <Source>smallBlue.png</Source>
+      <Name>smallBlue</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\smallBlue.xnb</Output>
+      <Time>2015-05-06T15:34:43.5450007-04:00</Time>
+    </Item>
+    <Item>
+      <Source>johnsmith.png</Source>
+      <Name>johnsmith</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\johnsmith.xnb</Output>
+      <Time>2015-05-07T16:45:14.7068882-04:00</Time>
+    </Item>
+    <Item>
+      <Source>JohnSmithFuture.png</Source>
+      <Name>JohnSmithFuture</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\JohnSmithFuture.xnb</Output>
+      <Time>2015-05-07T17:01:36.2190275-04:00</Time>
+    </Item>
+    <Item>
+      <Source>asteroid-png-0.png</Source>
+      <Name>asteroid</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\asteroid.xnb</Output>
+      <Time>2015-05-07T17:28:32.1484533-04:00</Time>
+    </Item>
+    <Item>
+      <Source>Rolfe.png</Source>
+      <Name>Rolfe</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\Rolfe.xnb</Output>
+      <Time>2015-05-07T17:49:26.1781797-04:00</Time>
+    </Item>
+    <Item>
+      <Source>ratcliffe.png</Source>
+      <Name>ratcliffe</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\ratcliffe.xnb</Output>
+      <Time>2015-05-07T18:24:25.9762813-04:00</Time>
+    </Item>
+    <Item>
+      <Source>nakoma.png</Source>
+      <Name>nakoma</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\nakoma.xnb</Output>
+      <Time>2015-05-07T19:08:13.4225627-04:00</Time>
+    </Item>
+    <Item>
+      <Source>space-galaxies-stars.jpg</Source>
+      <Name>bg2</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\bg2.xnb</Output>
+      <Time>2015-05-07T19:45:47.2684753-04:00</Time>
+    </Item>
+    <Item>
+      <Source>alien1.png</Source>
+      <Name>alien1</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\alien1.xnb</Output>
+      <Time>2015-05-07T19:49:57.8158058-04:00</Time>
+    </Item>
+    <Item>
+      <Source>alien2.png</Source>
+      <Name>alien2</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\alien2.xnb</Output>
+      <Time>2015-05-07T19:48:54.4001786-04:00</Time>
+    </Item>
+    <Item>
+      <Source>alien3.png</Source>
+      <Name>alien3</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\alien3.xnb</Output>
+      <Time>2015-05-07T19:49:03.8997219-04:00</Time>
+    </Item>
+    <Item>
+      <Source>alien4.png</Source>
+      <Name>alien4</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\alien4.xnb</Output>
+      <Time>2015-05-07T19:49:07.0319011-04:00</Time>
+    </Item>
+    <Item>
+      <Source>alienspaceship.png</Source>
+      <Name>alienspaceship</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\alienspaceship.xnb</Output>
+      <Time>2015-05-07T19:51:37.1214857-04:00</Time>
+    </Item>
+    <Item>
+      <Source>aliensprite2.png</Source>
+      <Name>aliensprite2</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\aliensprite2.xnb</Output>
+      <Time>2015-05-07T19:50:46.8046078-04:00</Time>
+    </Item>
+    <Item>
+      <Source>23 Sexualizer (Feat. Flash Arnold).mp3</Source>
+      <Name>sexualizer</Name>
+      <Importer>Mp3Importer</Importer>
+      <Processor>SongProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\sexualizer.xnb</Output>
+      <Extra>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\sexualizer.wma</Extra>
+      <Time>2015-05-07T03:05:53.9300526-04:00</Time>
+    </Item>
+    <Item>
+      <Source>29 Roller Mobster.mp3</Source>
+      <Name>rollermobster</Name>
+      <Importer>Mp3Importer</Importer>
+      <Processor>SongProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\rollermobster.xnb</Output>
+      <Extra>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\rollermobster.wma</Extra>
+      <Time>2015-03-15T23:14:16.2346503-04:00</Time>
+    </Item>
+    <Item>
+      <Source>44 Future Club.mp3</Source>
+      <Name>futureclub</Name>
+      <Importer>Mp3Importer</Importer>
+      <Processor>SongProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\futureclub.xnb</Output>
+      <Extra>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\futureclub.wma</Extra>
+      <Time>2015-03-15T23:14:16.2346503-04:00</Time>
+    </Item>
+    <Item>
+      <Source>Mega Man 2 SFX (4).wav</Source>
+      <Name>mmfire</Name>
+      <Importer>WavImporter</Importer>
+      <Processor>SoundEffectProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\mmfire.xnb</Output>
+      <Time>2015-05-07T03:21:19.8190104-04:00</Time>
+    </Item>
+    <Item>
+      <Source>Mega Man 2 SFX (3).wav</Source>
+      <Name>mmHit</Name>
+      <Importer>WavImporter</Importer>
+      <Processor>SoundEffectProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\mmHit.xnb</Output>
+      <Time>2015-05-07T03:23:42.6301787-04:00</Time>
+    </Item>
+    <Item>
+      <Source>SpriteFont1.spritefont</Source>
+      <Name>SpriteFont1</Name>
+      <Importer>FontDescriptionImporter</Importer>
+      <Processor>FontDescriptionProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Doug\Documents\Visual Studio 2013\Projects\SpriteTest\SpriteTest\SpriteTest\bin\x86\Release\Content\SpriteFont1.xnb</Output>
+      <Time>2015-05-07T17:43:30.8238546-04:00</Time>
     </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>

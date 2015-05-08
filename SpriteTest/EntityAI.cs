@@ -28,6 +28,23 @@ namespace SpriteTest
             TimeLogicLastPerformed = 0;
         }
 
+        public void SetParent(Mobile newParent)
+        {
+            Parent = newParent;
+        }
+
+        public EntityAI(EntityAI toCopy)
+        {
+            Parent = toCopy.Parent;
+            LogicFrequency = toCopy.LogicFrequency;
+            TimeLogicLastPerformed = toCopy.LogicFrequency;
+        }
+
+        public virtual EntityAI GetCopy()
+        {
+            return new EntityAI(this);
+        }
+
         public virtual void PerformLogic(double deltaT)
         {
 
@@ -55,6 +72,17 @@ namespace SpriteTest
             
         }
 
+        public DumbShooter(DumbShooter toCopy)
+            : base(toCopy)
+        {
+
+        }
+
+        public override EntityAI GetCopy()
+        {
+            return new DumbShooter(this);
+        }
+
         // We want to try to ram the target
         // We will add velocity on a vector toward the target, without correcting for our current heading
         // This will make us miss an actively moving target, but hit a stationary one
@@ -65,14 +93,23 @@ namespace SpriteTest
             {
                 // Set velocity wanted as the vector to the target
                 Vector2 parentToTarget = Target.GetCenterPosition() - Parent.GetCenterPosition();
+                
                 Vector2 rot = new Vector2(parentToTarget.Y, -parentToTarget.X);
+                
                 parentToTarget.Normalize();
                 Parent.RotateToWorldVector(rot);
+                
                 if (Parent.Type == Entity.EntityType.VESSEL)
                 {
                     Vessel v = (Vessel)Parent;
+                    Vector2 flightPath = -Parent.GetVelocity() + parentToTarget * v.CurrentWeapon.InitSpeed;
+                    Vector2 flightPathCorrect = new Vector2(flightPath.Y, -flightPath.X);
+                    Parent.RotateToWorldVector(flightPathCorrect);
+                    
+                    
                     if (v.CanFire())
                     {
+
                         Program.GGame.AddToSimulated(v.Fire());
                     }
                 }
@@ -85,6 +122,46 @@ namespace SpriteTest
         }
     }
 
+    public class StrafingShooter : DumbShooter
+    {
+        float Distance;
+        public StrafingShooter(Mobile parent, double logicFrequency, float distance)
+            : base(parent, logicFrequency)
+        {
+            Distance = distance;
+        }
+
+        public StrafingShooter(StrafingShooter toCopy)
+            : base(toCopy)
+        {
+            Distance = toCopy.Distance;
+        }
+
+        public override EntityAI GetCopy()
+        {
+            return new StrafingShooter(this);
+        }
+
+        public override void PerformLogic(double deltaT)
+        {
+            base.PerformLogic(deltaT);
+            if (Target != null && !Target.IsDestroyed)
+            {
+                // Get vector to target
+                Vector2 toTarget = Target.GetCenterPosition() - Parent.GetCenterPosition();
+                // Get a vector perpendicular to that
+                Vector2 toGo = new Vector2(toTarget.Y, -toTarget.X);
+                // The farther away we are in terms of distance, the more we go directly toward the target
+                float d = toTarget.Length();
+                float ratio = d / Distance;
+                toGo += ratio * toTarget;                
+                toGo.Normalize();
+                // Try to go in this direction
+                Parent.SetVelocityWanted(toGo * Parent.MaxSpeed);
+            }
+        }
+    }
+
     public class Rammer : EntityAI
     {
         protected Mobile Target;          // Typically use the player      
@@ -93,6 +170,17 @@ namespace SpriteTest
             : base(parent, logicFrequency)
         {
             
+        }
+
+        public Rammer(Rammer toCopy)
+            : base(toCopy)
+        {
+
+        }
+
+        public override EntityAI GetCopy()
+        {
+            return new Rammer(this);
         }
 
         // We want to try to ram the target
@@ -110,6 +198,15 @@ namespace SpriteTest
                 Parent.RotateToWorldVector(rot);
                 parentToTarget *= Parent.MaxSpeed;
                 Parent.SetVelocityWanted(parentToTarget);
+                if (Parent.Type == Entity.EntityType.VESSEL)
+                {
+                    Vessel v = (Vessel)Parent;
+                    if (v.CanFire())
+                    {
+
+                        Program.GGame.AddToSimulated(v.Fire());
+                    }
+                }
             }
             else
             {

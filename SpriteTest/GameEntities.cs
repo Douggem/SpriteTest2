@@ -32,10 +32,10 @@ namespace SpriteTest
         public static Vector2 RotateVertexAroundOrigin(Vector2 p, float angle)
         {
             return RotateVertexAroundPoint(p, angle, new Vector2(0, 0));
-            float xnew = (float)(p.X * Math.Cos(angle) - p.Y * Math.Sin(angle));
+            /*float xnew = (float)(p.X * Math.Cos(angle) - p.Y * Math.Sin(angle));
             float ynew = (float)(p.X * Math.Sin(angle) + p.Y * Math.Cos(angle));
             Vector2 result = new Vector2(xnew, ynew);
-            return result;
+            return result;*/
         }
         public static Vector2 RotateVertexAroundPoint(Vector2 p, float angle, Vector2 o)
         {
@@ -289,9 +289,16 @@ namespace SpriteTest
                 Origin = new Vector2(0, 0);
         }
 
+        
+
         public Entity()                 // Only here to prevent compiler errors for inherited classes, remove before production
         {
 
+        }
+
+        public virtual bool KeepInBounds()
+        {
+            return false;
         }
 
         public virtual bool Remove()
@@ -324,6 +331,10 @@ namespace SpriteTest
             return;
         }
 
+        public virtual void OnDestroy() {
+
+        }
+
         public virtual void RotateToWorldVector(Vector2 dir)
         {
 
@@ -351,7 +362,7 @@ namespace SpriteTest
 
         public void SetPosition(float x, float y) { Position.X = x; Position.Y = y; }
         public void SetCenterPosition(float x, float y) { Position.X = x - Origin.X; Position.Y = y - Origin.Y; }
-        public void SetVelocity(float x, float y) { Velocity.X = x; Velocity.Y = y; }        
+        public virtual void SetVelocity(float x, float y) { Velocity.X = x; Velocity.Y = y; }        
         public void SetAcceleration(float x, float y) { Acceleration.X = x; Acceleration.Y = y; }
 
         public void SetPosition(Vector2 p) { Position = p; }
@@ -396,7 +407,7 @@ namespace SpriteTest
             // We want things drawn at the center of their position, not the top left
             
             AnimTexture.Rotation = Rotation;
-            AnimTexture.DrawFrame(spriteBatch, screenPos, timeAlive, scale);            
+            AnimTexture.DrawFrame(spriteBatch, screenPos, timeAlive, scale );            
         }
 
         public virtual void DoLogic(double deltaT) 
@@ -425,10 +436,11 @@ namespace SpriteTest
             { get; set; }
         public float ThrustAcceleration         // Not only the "gas" if the entity wants to move, but also the "brake" in the event of stopping or inertial dampening.
             { get; set; } 
-        float Hull                              // i.e. HP, health, life, etc.
-            { get; set; } 
-        float Mass;                             // Used in collision calculations to calculate impulse
-        float MassInv;                          // Pre-calculated to avoid divide by zero
+        protected float Hull                              // i.e. HP, health, life, etc.
+            { get; set; }
+        protected float MaxHull;
+        public float Mass;                             // Used in collision calculations to calculate impulse
+        public float MassInv;                          // Pre-calculated to avoid divide by zero
         Rectangle BoundingBox;                  // Used for collision, obviously
         public bool CanCollide                  // If false, will not collide with anything
             { get; set; } 
@@ -439,6 +451,9 @@ namespace SpriteTest
         public bool IsDestroyed 
             { get; set; }
         public float Speed;
+        public bool StretchOnVelocity = false;
+        public bool AtWarp = false;
+        public Vector2 WarpTarget;
         public EntityAI AIRoutine;
 
         // Animation for destruction
@@ -454,9 +469,19 @@ namespace SpriteTest
             MaxSpeed = toCopy.MaxSpeed;
             ThrustAcceleration = toCopy.ThrustAcceleration;
             Hull = toCopy.Hull;
+            MaxHull = toCopy.MaxHull;
             Mass = toCopy.Mass;
             MassInv = toCopy.MassInv;
-            BoundingBox = new Rectangle(BoundingBox.X, BoundingBox.Y, BoundingBox.Width, BoundingBox.Height);
+            BoundingBox = new Rectangle(toCopy.BoundingBox.X, toCopy.BoundingBox.Y, toCopy.BoundingBox.Width, toCopy.BoundingBox.Height);
+            AIRoutine = toCopy.AIRoutine.GetCopy();
+            AIRoutine.SetParent(this);
+            CanCollide = toCopy.CanCollide;
+            CollideWithOwnSide = toCopy.CollideWithOwnSide;
+            DampenInnertia = toCopy.DampenInnertia;
+            IsDestroyed = false;
+            Speed = toCopy.Speed;
+            DestructionAnimation = toCopy.DestructionAnimation;
+
         }
 
         public Mobile(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass) 
@@ -464,6 +489,7 @@ namespace SpriteTest
         {
             Type = EntityType.MOBILE;
             Hull = hull;
+            MaxHull = Hull;
             Mass = mass;
             if (Mass != 0)
                 MassInv = 1 / Mass;
@@ -486,6 +512,7 @@ namespace SpriteTest
         {
             Type = EntityType.MOBILE;
             Hull = info.Hull;
+            MaxHull = Hull;
             Mass = info.Mass;
             if (Mass != 0)
                 MassInv = 1 / Mass;
@@ -502,13 +529,71 @@ namespace SpriteTest
             BoundingBox = new Rectangle(Model.Bounds.X, Model.Bounds.Y, Model.Bounds.Width, Model.Bounds.Height);
             AIRoutine = new EntityAI(this);
             DestructionAnimation = info.DestructionAnimation;
-        }        
+        }
+
+        public void SetTexture(Texture2D model)
+        {
+            Model = model;
+            BoundingBox = new Rectangle(model.Bounds.X, model.Bounds.Y, model.Bounds.Width, model.Bounds.Height);
+        }
+
+        public void Repair()
+        {
+            Hull = MaxHull;
+        }
+
+        public float GetHull()
+        {
+            return Hull;
+        }
+
+        virtual public Mobile GetCopy()
+        {
+            return new Mobile(this);
+        }
+
+        public override bool KeepInBounds()
+        {
+            return CanCollide;
+        }
 
         public override void Update(double deltaT)         
+        {            
+            if (AtWarp)
+            {
+                Vector2 centerPosition = GetCenterPosition();
+                Vector2 vecToTarget = WarpTarget - centerPosition;
+                float dist = vecToTarget.Length();
+                if (dist < 60)
+                {
+                    EngageWarp(false);
+                }
+                else if (dist > 5000)
+                    dist = 5000;
+                vecToTarget.Normalize();
+                SetVelocity(vecToTarget * dist *5 );
+            }
+            else
+            {
+                base.Update(deltaT);
+                SpeedUpToWanted(deltaT);
+                AIRoutine.DoLogic(deltaT);
+            }
+            
+        }
+
+        // Force is in newtons
+        public void ApplyForce(Vector2 force)
         {
-            base.Update(deltaT);
-            SpeedUpToWanted(deltaT);
-            AIRoutine.DoLogic(deltaT);
+            Vector2 velocityChange = force * MassInv * Elasticity;
+            Vector2 newVelocity = GetVelocity() + velocityChange;
+            SetVelocity(newVelocity);
+        }
+
+        public override void SetVelocity(float x, float y)
+        {
+            base.SetVelocity(x, y);
+            
         }
 
         public virtual void OnCollide(Mobile collidedWith) 
@@ -543,6 +628,22 @@ namespace SpriteTest
             return result;
         }
 
+        public override void Draw(SpriteBatch spriteBatch, Vector2 screenPos, float scale)
+        {
+            Texture2D tex = Model;
+            Vector2 vecScale = new Vector2(1, 1);
+            // We want to stretch and keep the front of the ship at the same position
+            Vector2 offset = new Vector2(tex.Width / 2, tex.Height / 2);
+            if (AtWarp)
+            {
+                Speed = Velocity.Length();
+                bool scaleY = Speed > 2400;                                
+                if (scaleY)
+                    vecScale.Y *= Speed / 2400;
+            }
+            spriteBatch.Draw(tex, screenPos, null, Color.White, -Rotation, GetOrigin(), scale * vecScale, Microsoft.Xna.Framework.Graphics.SpriteEffects.None, 1);           
+        }
+
         public Rectangle GetBoundingBoxNonRotated()
         {
             // Return a copy so that it can't be edited -  maybe not necessary?
@@ -569,7 +670,7 @@ namespace SpriteTest
          * */
         public void CheckSpeed()
         {
-            if (Velocity.X == 0 && Velocity.Y == 0)
+            if ((Velocity.X == 0 && Velocity.Y == 0) || AtWarp)
                 return;
             float speed = Velocity.Length();
             if (speed > MaxSpeed)
@@ -577,6 +678,7 @@ namespace SpriteTest
                 float ratio = MaxSpeed / speed;
                 Velocity *= ratio;
             }
+            Speed = speed;
         }
 
         // Used for vectors calculated in world space i.e. from ship to ship
@@ -590,6 +692,12 @@ namespace SpriteTest
             if (rotationWanted < 0)
                 rotationWanted += (float)Math.PI * 2;
             RotationWanted = rotationWanted;
+        }
+
+        public void SetRotationWantedToWorldVector(Vector2 dir)
+        {
+            dir.Normalize();
+            RotationWanted = (float)Math.Atan2(dir.X, dir.Y) + (float)(Math.PI / 2F);
         }
 
         // Used for joysticks
@@ -655,6 +763,13 @@ namespace SpriteTest
 
         }
 
+        public void EngageWarp(bool warp)
+        {
+            AtWarp = warp;
+            CanCollide = !warp;
+            StretchOnVelocity = warp;
+        }
+
         public override void DoSpawnOnDestroy()
         {
             // If you called this without checking SpawnOnDestroy first, you done goofed
@@ -667,8 +782,79 @@ namespace SpriteTest
 
     public class Pickup : Mobile
     {
-        float PickupRadius;             // If within this distance to pickup, you pick it up
+        public Pickup(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass)
+            : base(model, side, pos, rot, hull, mass)
+        {
 
+        }
+
+        public Pickup(Pickup toCopy)
+            :base(toCopy)
+        {
+            
+        }
+
+        override public Mobile GetCopy()
+        {
+            return new Pickup(this);
+        }
+
+        public virtual void PickupLogic(Mobile collidedWith)
+        {
+
+        }
+
+        public override void OnCollide(Mobile collidedWith)
+        {
+            if (collidedWith == Program.GGame.GetPlayerVessel())
+            {
+                PickupLogic(collidedWith);
+            }
+        }
+    }
+
+    public class Ancestor : Pickup
+    {
+        bool PickedUp = false;
+        public Ancestor(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass)
+            : base(model, side, pos, rot, hull, mass)
+        {
+
+        }
+
+        public Ancestor(Pickup toCopy)
+            :base(toCopy)
+        {
+            
+        }
+
+        override public Mobile GetCopy()
+        {
+            return new Ancestor(this);
+        }
+
+        public override void PickupLogic(Mobile collidedWidth)
+        {
+            if (!PickedUp)
+            {
+                int ancs = Program.GGame.AncestorsRetrieved;
+                if (ancs == 0)
+                {
+                    // first time pickup stuff
+                    Program.GGame.AncestorDialog();
+                }
+                Program.GGame.AncestorsRetrieved++;
+                PickedUp = true;
+            }
+            IsDestroyed = true;
+        }
+
+        public override void OnDestroy()
+        {
+            base.OnDestroy();
+            if (!PickedUp)
+                Program.GGame.RandomizeGraphics();
+        }
     }
 
     /*
@@ -691,7 +877,7 @@ namespace SpriteTest
             { get; set; }
         public float DeflectionChance
             { get; set; }
-
+        public bool Seeking = false;
         public Projectile(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass)
             : base(model, side, pos, rot, hull, mass)
         {
@@ -711,23 +897,103 @@ namespace SpriteTest
             InitTime = Environment.TickCount;
             DeflectionChance = 0;
             BaseDamage = info.BaseDamage;
+            ExplosionRadius = info.ExplosionRadius;
+            ExplosionDamage = info.ExplosionDamage;
+            Hull = info.Hull;
+            Seeking = info.Seeking;
+            Mass = info.Mass;
+            MassInv = info.MassInv;
+            Acceleration = info.Acceleration * new Vector2((float)Math.Cos(rot), -(float)Math.Sin(rot));
         }
 
         // Our base implementation of OnCollide is to do damage like a regular bullet and then disappear
         public override void OnCollide(Mobile collidedWith)
         {
             // Only destroy the object if it did not deflect
-            float randNum = (float)RNG.Generator.NextDouble();
-            if (randNum > DeflectionChance)            
+            if (collidedWith.Type != EntityType.PROJECTILE)
             {
-                IsDestroyed = true;
-            }
-            else
-            {
-                // Deflection should have already occurred, align our sprite with the new direction
+                float randNum = (float)RNG.Generator.NextDouble();
+                if (randNum > DeflectionChance)
+                {
+                    IsDestroyed = true;
+                }
+                else
+                {
+                    // Deflection should have already occurred, align our sprite with the new direction
 
+                }
             }
             collidedWith.ApplyDamage(BaseDamage);
+        }
+
+        public override void OnDestroy() 
+        {
+            if (ExplosionRadius > 0 && ExplosionDamage > 0)
+            {
+                Vector2 centerPos = GetCenterPosition();
+                List<Mobile> mobs = Program.GGame.GetMobsWithinRadius(centerPos, ExplosionRadius);
+                foreach (Mobile mob in mobs)
+                {
+                    float distance = (centerPos - mob.GetCenterPosition()).Length();
+                    float appliedDamage = distance / ExplosionRadius * ExplosionDamage;
+                    if (CollideWithOwnSide || Side != mob.Side)
+                    mob.ApplyDamage(appliedDamage);
+                }
+            }
+        }
+
+        public override void Update(double deltaT)
+        {
+            Velocity += Acceleration * 1000F * (float)deltaT;
+            if (Seeking)
+            {
+                Vector2 pos = GetCenterPosition();
+                Mobile closestMob = Program.GGame.GetClosestMob(pos, Side);
+
+                if (closestMob != null)
+                {
+                    Vector2 dir = (closestMob.GetCenterPosition() - pos);
+                    dir.Normalize();
+                    VelocityWanted = dir * MaxSpeed;
+                    SpeedUpToWanted(deltaT);
+                }
+            }
+        }
+    }
+
+    class SeekingProjectile : Projectile
+    {
+        SeekingProjectile(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass)
+            : base(model, side, pos, rot, hull, mass)
+        {
+
+        }
+
+        public override void Update(double deltaT)
+        {
+            base.Update(deltaT);
+            Vector2 pos = GetCenterPosition();
+            List<Mobile> closeEntities = Program.GGame.GetMobsWithinRadius(pos, 1000);
+            float closestDist = 1000;
+            Mobile closestMob = null;
+            foreach (Mobile mob in closeEntities)
+            {
+                if (mob.Type == EntityType.PROJECTILE || mob.Side == Side)
+                    continue;
+                float distance = (float)(mob.GetCenterPosition() - pos).Length();
+                if (distance < closestDist)
+                {
+                    closestMob = mob;
+                    closestDist = distance;
+                }
+            }
+            if (closestMob != null)
+            {
+                Vector2 dir = (closestMob.GetCenterPosition() - pos);
+                dir.Normalize();
+                RotateToWorldVector(dir);
+            }
+
         }
     }
 
@@ -742,12 +1008,29 @@ namespace SpriteTest
         { get; set; }
         public float ShotTimer;                            // Set to CurrentWeapon.ShotDelay when shot, don't fire until reaches 0
 
+        public bool SpawnAncestor = false;
+
         public Vessel(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass, float armor = 0)
             : base(model, side, pos, rot, hull, mass)
         {
             RotationSpeed = 6 * (float)Math.PI;
             Armor = armor;
             Type = EntityType.VESSEL;
+        }
+
+        public Vessel(Vessel toCopy)
+            :base (toCopy)
+        {
+            RotationSpeed = toCopy.RotationSpeed;
+            Armor = toCopy.Armor;
+            Type = toCopy.Type;
+            CurrentWeapon = toCopy.CurrentWeapon;
+            SpawnAncestor = toCopy.SpawnAncestor;
+        }
+
+        override public Mobile GetCopy()
+        {
+            return new Vessel(this);
         }
 
         public Vessel() {  }
@@ -760,6 +1043,21 @@ namespace SpriteTest
             if (ShotTimer > 0)
                 ShotTimer -= (float)deltaT;
             else ShotTimer = 0;
+        }
+
+        public override void OnDestroy()
+        {
+            base.OnDestroy();
+            if (SpawnAncestor)
+            {
+                Ancestor newAncestor = new Ancestor(Program.GGame.Ancestor);
+                newAncestor.Rotation = Rotation;
+                newAncestor.RotationWanted = RotationWanted;
+                newAncestor.SetCenterPosition(GetCenterPosition());
+
+                newAncestor.SetVelocity(GetVelocity());
+                Program.GGame.AddToSimulated(newAncestor);
+            }
         }
 
         /*
@@ -797,16 +1095,27 @@ namespace SpriteTest
 
         public virtual bool CanFire()
         {
-            if (ShotTimer <= 0)
+            if (ShotTimer <= 0 && CurrentWeapon != null)
                 return true;
             return false;
         }
 
         public virtual Projectile Fire()
         {
+            //Program.GGame.FireSound.Play();
             float angle = Rotation + (float)Math.PI / 2;
-            Projectile bullet = new Projectile(CurrentWeapon.Munition, GetCenterPosition(), angle);
+            // Calculate the position the bullet should come from.  It should be our center position and correct for projectile width.
+            // Along an axis perpendicular to our heading it should move half the width of the projectile width
+            Vector2 centerPos = GetCenterPosition();
             Vector2 angleVector = new Vector2((float)Math.Cos(angle), -(float)Math.Sin(angle));
+            Vector2 perpHeading = new Vector2(-angleVector.Y, angleVector.X);
+            perpHeading.Normalize();
+           
+            Vector2 projPos = centerPos;
+
+            
+            Projectile bullet = new Projectile(CurrentWeapon.Munition, projPos, angle);
+            bullet.SetCenterPosition(projPos);
             ShotTimer = CurrentWeapon.ShotDelay;
             bullet.SetVelocity(angleVector * 2 * CurrentWeapon.InitSpeed + GetVelocity());
             bullet.SetVelocityWanted(angleVector * 0);
@@ -814,6 +1123,37 @@ namespace SpriteTest
             bullet.Rotation = Rotation;
              
             return bullet;
+        }
+    }
+
+    public class SuicideVessel : Vessel
+    {
+        public float ExplosionDamage;
+        public float ExplosionRadius;
+
+        public SuicideVessel(Texture2D model, EntitySide side, Vector2 pos, float rot, float hull, float mass, float armor, float expDamage, float expRad)
+            : base(model, side, pos, rot, hull, mass, armor)
+        {
+            ExplosionDamage = expDamage;
+            ExplosionRadius = expRad;
+        }
+
+        public SuicideVessel(SuicideVessel toCopy)
+            :base (toCopy)
+        {
+            ExplosionDamage = toCopy.ExplosionDamage;
+            ExplosionRadius = toCopy.ExplosionRadius;
+        }
+
+        override public Mobile GetCopy()
+        {
+            return new SuicideVessel(this);
+        }
+
+        public override void OnCollide(Mobile collidedWith)
+        {
+            collidedWith.ApplyDamage(ExplosionDamage);
+            IsDestroyed = true;
         }
     }
 
@@ -831,7 +1171,7 @@ namespace SpriteTest
         public ProjectileInfo Munition;
         public float InitSpeed;                            // Velocity (relative to vessel in direction of heading) the projectile will be launched at
         public float ShotDelay;                            // Time between shots, i.e. rate of fire
-        
+        public float InitAcceleration;
 
         public Weapon(ProjectileInfo munition, float speed, float delay)
         {
@@ -840,6 +1180,63 @@ namespace SpriteTest
             InitSpeed = speed;
             ShotDelay = delay;
             
+        }
+    }
+
+    public class DialogBox : Entity
+    {
+        private string _dialog;
+        public string Dialog
+        {
+            get { return _dialog; }
+            set {
+                _dialog = value;
+                Vector2 dialogSize = Program.GGame.Font1.MeasureString(Dialog);
+                rect = new Rectangle(0, 0, (int)dialogSize.X + 20 + Model.Width, (int)dialogSize.Y + 20);
+                rect.X = (int)Position.X;
+                rect.Y = (int)Position.Y;
+            }
+        }
+
+        Rectangle rect;
+        public DialogBox(Texture2D portrait, Vector2 pos, string dialog)
+            : base(portrait, EntitySide.NEUTRAL, pos, 0)
+        {
+            Dialog = dialog;
+            Vector2 dialogSize = Program.GGame.Font1.MeasureString(Dialog);            
+            rect = new Rectangle(0, 0, (int)dialogSize.X + 20 + 3 * Model.Width, (int)dialogSize.Y + 20);
+            rect.X = (int)Position.X;
+            rect.Y = (int)Position.Y;
+        }
+
+        public DialogBox(DialogBox toCopy)
+            : base(toCopy)
+        {
+            Dialog = toCopy.Dialog;
+            rect = toCopy.rect;
+        }
+
+        public override void Draw(SpriteBatch spriteBatch, Vector2 screenPos, float scale)
+        {
+            scale = 1;
+            // Draw our rectangle
+            spriteBatch.Draw(Program.GGame.BoundingBoxTexture,
+                                rect,
+                                null,
+                                Color.Black, //colour of line
+                                0,     //angle of line (calulated above)
+                                new Vector2(0, 0), // point in line about which to rotate
+                                SpriteEffects.None,
+                                0);
+            // Draw our portrait
+            Texture2D tex = Model;
+            Vector2 textPos = Position;
+            Vector2 imagePos = Position;
+            imagePos.X += Model.Width / 2;
+            textPos.X += Model.Width + 5;
+            spriteBatch.Draw(tex, imagePos, null, Color.White, -Rotation, GetOrigin(), scale, Microsoft.Xna.Framework.Graphics.SpriteEffects.None, 1);    
+            // Draw our text
+            spriteBatch.DrawString(Program.GGame.Font1, Dialog, textPos, Color.White);
         }
     }
 }

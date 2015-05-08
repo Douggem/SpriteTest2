@@ -101,8 +101,9 @@ namespace SpriteTest
         { get; set; }
         public float TimeToLive               // After TimeToLive seconds, this projectile should be removed from the simulation
         { get; set; }
-
-
+        public float ExplosionDamage;
+        public float Acceleration;
+        public bool Seeking = false;
         public ProjectileInfo(string name, Texture2D model, float hull, float mass, float baseDamage)
             : base(name, model, hull, mass)
         {
